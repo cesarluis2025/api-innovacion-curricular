@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16
+    container_name: innovacion_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: innovacion_curricular
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Diseno123!
+    ports:
+      - "15432:5432"          # te conectas desde SQLTools/pgAdmin a localhost:15432
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      # Todo lo que pongas en ./db se ejecuta UNA sola vez, en orden alfabético,
+      # la primera vez que se crea el volumen (no en cada arranque).
+      - ./db:/docker-entrypoint-initdb.d
+
+  api:
+    build: ./api_innovacion
+    container_name: innovacion_api
+    restart: unless-stopped
+    depends_on:
+      - db
+    volumes:
+      - ./api_innovacion:/app     # tu código se refleja adentro del contenedor al instante
+    environment:
+      # Program.cs lee esta variable; así no hay que tocar código para cambiar
+      # la conexión entre "correr con docker" y "correr local".
+      CONNECTION_STRING: "Host=db;Port=5432;Database=innovacion_curricular;Username=postgres;Password=Diseno123!"
+    ports:
+      - "8080:8080"          # API:      http://localhost:8080
+                              # Swagger:  http://localhost:8080/swagger
+
+  frontend:
+    build: ./frontend_innovacion
+    container_name: innovacion_frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    volumes:
+      - ./frontend_innovacion:/app
+    environment:
+      # "api" es el nombre del servicio de arriba; dentro de la red de
+      # Docker, los contenedores se hablan entre sí por su nombre de servicio.
+      API_URL: "http://api:8080/"
+    ports:
+      - "8081:8081"          # Frontend: http://localhost:8081
+
+volumes:
+  db_data:
