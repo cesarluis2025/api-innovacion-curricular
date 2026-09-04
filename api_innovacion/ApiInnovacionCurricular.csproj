@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Dapper: para escribir el SQL a mano contra PostgreSQL -->
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <!-- Npgsql: el driver de PostgreSQL para .NET -->
+    <PackageReference Include="Npgsql" Version="8.0.5" />
+    <!-- Swashbuckle: genera la documentación interactiva /swagger -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+</Project>

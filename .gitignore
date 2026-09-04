@@ -1,0 +1,6 @@
+﻿## Compilados de .NET — se regeneran solos, no se suben
+bin/
+obj/
+
+## Archivos de usuario de Visual Studio (si alguien lo usa además de VS Code)
+*.user
