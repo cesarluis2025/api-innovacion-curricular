@@ -1,59 +1,87 @@
-# Constitución del proyecto
+# 1_constitution.md
 
-Módulo: innovación curricular — sistema de gestión de información del conocimiento universitario
-Asignatura: diseño de software
-Equipo: Carlos Adrián Rentería Machado, Cesar Luis Mosquera García
+**Versión de la constitución:** 1.0 — vigente desde la Entrega 1.
+Rige TODAS las entregas del módulo de innovación curricular; nada de aquí
+cambia al pasar de una entrega a otra salvo por el artículo de enmiendas.
 
-Este documento reúne las reglas que no cambian entre entregas. Las decisiones propias de cada entrega van en su propio `spec.md`, `plan.md` y `contracts.md`; lo que está aquí aplica siempre.
+## Artículo 1 — Separación estricta backend / frontend
+El frontend nunca se conecta a la base de datos. Toda lectura o escritura
+pasa por la API vía HTTP/JSON. La API es la única capa con acceso a
+PostgreSQL.
 
-## 1. Principios no negociables
+## Artículo 2 — La API solo habla JSON
+Ningún endpoint devuelve HTML. Cada operación usa el verbo HTTP correcto
+(`GET`, `POST`, `PUT`, `DELETE`) y responde con el código HTTP exacto que
+define `6_contracts.md` de la entrega correspondiente.
 
-1. **Separación estricta backend/frontend.** El backend (API) es el único que se conecta a la base de datos. El frontend consume exclusivamente la API vía HTTP/JSON. Ninguna pantalla del frontend ejecuta SQL ni abre una conexión a PostgreSQL directamente.
-2. **La API solo responde JSON.** No genera HTML. Cada endpoint usa el verbo HTTP correcto (GET, POST, PUT, DELETE) y responde con el código HTTP correspondiente (200, 201, 400, 404, 500).
-3. **Borrado lógico, nunca físico.** Ninguna operación de la API ejecuta `DELETE FROM`. Eliminar un registro significa actualizar su columna `activo` a `false`. Los listados solo devuelven registros con `activo = true`, salvo que el endpoint diga explícitamente lo contrario.
-4. **El ID se digita, no se genera solo.** El script de base de datos que entregó el profesor define las llaves primarias de las 22 tablas del módulo como `INT NOT NULL` sin autoincremento. El equipo decidió respetar el script tal como fue entregado en vez de cambiarlo a `SERIAL`. Esto implica que todo formulario de creación pide el ID, y la API valida que no exista antes de insertar.
-5. **La columna `activo` no viene en el script original.** El script `innovacion_curricular.pg.sql` solo trae `activo` en `usuario` y `rol`. Antes de programar cualquier endpoint, el equipo agrega `activo BOOLEAN DEFAULT TRUE` a cada una de las 22 tablas del módulo mediante `ALTER TABLE`. Esto se hace una sola vez y se documenta en `db/`.
-6. **Idioma del código: español.** Nombres de clases, métodos, variables, comentarios y mensajes de error van en español. Las palabras reservadas del lenguaje (`public`, `class`, `async`, etc.) se quedan en inglés porque son sintaxis de C#, no vocabulario del dominio.
-7. **La especificación manda.** Si el código y el `spec.md` de una entrega no coinciden, se corrige el código. No se agregan endpoints, campos o pantallas que la entrega actual no pida, aunque parezcan buena idea — eso se propone para la siguiente entrega.
+## Artículo 3 — SQL siempre parametrizado, sin ORM completo
+El acceso a datos se escribe con Dapper. Los valores viajan como
+`@parametros`; jamás se concatenan directamente en el texto del SQL.
+No se usa Entity Framework ni ningún ORM que genere el esquema.
 
-## 2. Stack técnico
+## Artículo 4 — Borrado lógico, nunca físico
+Ninguna operación ejecuta `DELETE FROM`. Eliminar un registro significa
+actualizar su columna `activo` a `false`. Todo `SELECT` de listado filtra
+por `activo = true`, salvo que el contrato de la entrega diga lo
+contrario explícitamente.
 
-- **Backend:** C# sobre ASP.NET Core.
-- **Acceso a datos:** Dapper (SQL escrito a mano contra PostgreSQL), siguiendo el mismo patrón del proyecto de referencia del profesor.
-- **Base de datos:** PostgreSQL, base `innovacion_curricular`, a partir del script entregado más el ajuste del punto 1.5.
-- **Contenedores:** Docker y docker-compose, para que la base de datos y la API corran con un solo comando, sin instalar PostgreSQL ni el SDK de .NET localmente.
-- **Documentación interactiva de la API:** Swagger, generado automáticamente por ASP.NET Core.
-- **Frontend (a partir de la entrega correspondiente):** por definir; debe consumir la API por HTTP, nunca la base de datos.
+## Artículo 5 — El script de base de datos es un artefacto dado
+El script SQL que entrega el profesor (`db/00_innovacion_curricular.pg.sql`)
+no se modifica. Si una entrega necesita una columna que el script no
+trae (como `activo`), se agrega en un script **adicional y numerado**
+(`db/01_alter_activo.sql`, `db/02_...`), nunca editando el original.
 
-## 3. Arquitectura por capas del backend
+## Artículo 6 — El id no se genera solo, salvo que el script lo diga
+Las llaves primarias de las 22 tablas propias del módulo están definidas
+en el script como `INT` sin autoincremento. La API las recibe en la
+petición de creación y valida que no estén repetidas antes de insertar.
+(Las 3 tablas de usuarios/roles sí son `SERIAL`, porque así las definió
+el script.)
 
-Cada tabla que la API expone sigue el mismo patrón de cuatro capas:
+## Artículo 7 — Arquitectura en capas, siempre las mismas cuatro
+Toda entidad de la API sigue el mismo patrón: **Controllers** (HTTP) →
+**Servicios** (reglas de negocio) → **Repositorios** (SQL con Dapper) →
+**Modelos** (la clase que representa la tabla). Ninguna capa se salta:
+un Controller nunca ejecuta SQL directo, un Repositorio nunca valida
+reglas de negocio.
 
-1. **Controllers** — capa HTTP. Recibe la petición, valida el formato básico, llama al servicio y traduce el resultado a un código HTTP. No contiene lógica de negocio ni SQL.
-2. **Servicios** — capa de negocio. Aplica las reglas (por ejemplo, que el ID no esté repetido, que las llaves foráneas existan y estén activas). No sabe cómo se guarda el dato, solo qué reglas debe cumplir.
-3. **Repositorios** — capa de datos. Ejecuta las consultas SQL contra PostgreSQL con Dapper. No conoce reglas de negocio, solo sabe leer y escribir.
-4. **Modelos** — las clases que representan cada tabla (por ejemplo, `AreaConocimiento`), y las clases de petición (`Crear...`, `Actualizar...`) que reciben y validan lo que llega en el body.
+## Artículo 8 — Idioma del código: español
+Nombres de clases, métodos, variables, comentarios y mensajes de error
+van en español. Las palabras reservadas del lenguaje (`public`, `class`,
+`async`…) se quedan en inglés porque son sintaxis, no vocabulario del
+dominio.
 
-Un error de validación (dato inválido, ID repetido) se traduce en un `400`. Un registro no encontrado se traduce en un `404`. Un error no previsto se traduce en un `500`.
+## Artículo 9 — La especificación manda
+Si el código hace algo que la spec de la entrega no pide, sobra y se
+retira. Si la spec pide algo que el código no hace, falta y se agrega.
+No se anticipan funcionalidades de entregas futuras (YAGNI): la Entrega 1
+no construye nada de la Entrega 2 "por si acaso".
 
-## 4. Flujo de trabajo en Git
+## Artículo 10 — Un solo comando levanta todo
+El proyecto completo (base de datos, API, frontend) arranca con
+`docker compose up -d --build`, parado en la raíz del repositorio. Nadie
+necesita instalar PostgreSQL ni el SDK de .NET localmente para probarlo.
 
-- Repositorio propio para la API (y, más adelante, otro independiente para el frontend), tal como exige el PDS.
-- Cada integrante trabaja en su propia rama; nadie hace commits directos a `main`.
-- Un integrante administra la rama `main` y hace merge cuando una parte del trabajo está lista y probada.
-- Un commit describe qué se hizo, no "cambios" o "avance".
+## Artículo 11 — Control de versiones por rama
+Repositorio independiente para la API y otro para el frontend. Nadie
+hace commits directos a `main`. Cada integrante trabaja en su propia
+rama y la integra a `main` mediante Pull Request cuando su parte está
+lista y probada.
 
-## 5. Qué significa que una entrega esté "terminada"
+## Artículo 12 — Cerrado es cerrado
+Una entrega con sus criterios de aceptación en verde no se reabre para
+agregarle cosas nuevas; los ajustes van a la entrega siguiente. Si algo
+quedó mal especificado, se anota como deuda de spec en el
+`4_research.md` de la entrega que lo corrige.
 
-Una entrega se da por cerrada solo cuando:
+## Artículo de enmiendas
+Cualquier cambio a un artículo de esta constitución se propone primero en
+el `4_research.md` de la entrega que lo necesita, con su justificación.
+Si se aprueba, esta constitución sube de versión (1.1, 1.2…) y el cambio
+queda registrado en la tabla de abajo.
 
-1. Todos los endpoints de esa entrega responden lo que dice su `contracts.md`.
-2. El borrado es lógico y verificable (el registro sigue en la base de datos con `activo = false`).
-3. El proyecto corre completo con `docker compose up -d --build` sin pasos manuales adicionales.
-4. Las ramas de los integrantes que aportaron a esa entrega están integradas en `main`.
-
-## 6. Historial de cambios de este documento
+## Historial de cambios
 
 | Versión | Fecha | Cambio |
 |---|---|---|
-| 1.0 | por definir | Versión inicial, alcance: entrega 1 (catálogos sin FK) |
+| 1.0 | (reconstruida junto con el spec kit de la Entrega 1) | Versión inicial, alcance: todas las entregas del módulo |
