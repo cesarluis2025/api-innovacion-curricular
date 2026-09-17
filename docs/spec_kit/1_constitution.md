@@ -1,87 +1,110 @@
-# 1_constitution.md
+# Constitución del proyecto
 
-**Versión de la constitución:** 1.0 — vigente desde la Entrega 1.
-Rige TODAS las entregas del módulo de innovación curricular; nada de aquí
-cambia al pasar de una entrega a otra salvo por el artículo de enmiendas.
+> **Documento permanente.** Estas reglas rigen TODAS las entregas del
+> módulo de innovación curricular. Cada entrega tiene además su propia
+> especificación en [versiones/](versiones/); ante conflicto, la
+> constitución gana.
 
-## Artículo 1 — Separación estricta backend / frontend
-El frontend nunca se conecta a la base de datos. Toda lectura o escritura
-pasa por la API vía HTTP/JSON. La API es la única capa con acceso a
-PostgreSQL.
+---
 
-## Artículo 2 — La API solo habla JSON
-Ningún endpoint devuelve HTML. Cada operación usa el verbo HTTP correcto
-(`GET`, `POST`, `PUT`, `DELETE`) y responde con el código HTTP exacto que
-define `6_contracts.md` de la entrega correspondiente.
+## Artículo 1 — El proyecto es POR ENTREGAS y la especificación manda
 
-## Artículo 3 — SQL siempre parametrizado, sin ORM completo
-El acceso a datos se escribe con Dapper. Los valores viajan como
-`@parametros`; jamás se concatenan directamente en el texto del SQL.
-No se usa Entity Framework ni ningún ORM que genere el esquema.
+- El sistema se construye por **entregas incrementales** (Entrega 1,
+  Entrega 2, …), cada una con su spec kit propio (documentos 2 a 8). Una
+  entrega está TERMINADA solo cuando pasa sus criterios de aceptación;
+  entonces se hace commit, se sube al repositorio, y solo después se
+  escribe la spec de la siguiente.
+- **No se anticipa** (**YAGNI** — "no lo vas a necesitar"): nada de
+  tablas con llave foránea, autenticación, roles o dashboard antes de la
+  entrega que los pida. El código de cada entrega solo puede nombrar lo
+  que su spec nombra.
+- El repositorio siempre contiene la **entrega en curso, funcionando**.
 
-## Artículo 4 — Borrado lógico, nunca físico
-Ninguna operación ejecuta `DELETE FROM`. Eliminar un registro significa
-actualizar su columna `activo` a `false`. Todo `SELECT` de listado filtra
-por `activo = true`, salvo que el contrato de la entrega diga lo
-contrario explícitamente.
+## Artículo 2 — Stack: C# y ASP.NET Core, con el SQL a la vista
 
-## Artículo 5 — El script de base de datos es un artefacto dado
-El script SQL que entrega el profesor (`db/00_innovacion_curricular.pg.sql`)
-no se modifica. Si una entrega necesita una columna que el script no
-trae (como `activo`), se agrega en un script **adicional y numerado**
-(`db/01_alter_activo.sql`, `db/02_...`), nunca editando el original.
+- Lenguaje **C#** sobre **ASP.NET Core** (.NET 10): controladores con
+  atributos, inyección de dependencias del framework, `async/await` en
+  todo el acceso a datos.
+- **SIN ORM de entidades** (sin Entity Framework): el SQL se escribe A
+  MANO, visible y SIEMPRE parametrizado (`@parametro`, nunca concatenar
+  valores). El ejecutor es **Dapper**: mapea fila→objeto pero JAMÁS
+  genera SQL por nosotros.
+- Frontend en **ASP.NET Core Razor Pages** — mismo lenguaje, sin
+  introducir un segundo ecosistema (Node/npm) mientras ninguna spec lo
+  pida.
+- Paquetes externos permitidos en la Entrega 1 (y ninguno más sin que una
+  spec lo pida): `Npgsql`, `Dapper`, `Swashbuckle.AspNetCore`.
 
-## Artículo 6 — El id no se genera solo, salvo que el script lo diga
-Las llaves primarias de las 22 tablas propias del módulo están definidas
-en el script como `INT` sin autoincremento. La API las recibe en la
-petición de creación y valida que no estén repetidas antes de insertar.
-(Las 3 tablas de usuarios/roles sí son `SERIAL`, porque así las definió
-el script.)
+## Artículo 3 — Arquitectura en capas con interfaces, desde el día 1
 
-## Artículo 7 — Arquitectura en capas, siempre las mismas cuatro
-Toda entidad de la API sigue el mismo patrón: **Controllers** (HTTP) →
-**Servicios** (reglas de negocio) → **Repositorios** (SQL con Dapper) →
-**Modelos** (la clase que representa la tabla). Ninguna capa se salta:
-un Controller nunca ejecuta SQL directo, un Repositorio nunca valida
-reglas de negocio.
+```
+HTTP → Controller (valida el body contra la PETICIÓN del verbo → 400)
+     → IServicio{Tabla}      (interfaz — reglas de negocio)
+     → IRepositorio{Tabla}   (interfaz — el servicio no sabe cómo se guarda)
+     → Repositorio{Tabla}    (Dapper, SQL a mano parametrizado)
+     → la base de datos
+```
 
-## Artículo 8 — Idioma del código: español
-Nombres de clases, métodos, variables, comentarios y mensajes de error
-van en español. Las palabras reservadas del lenguaje (`public`, `class`,
-`async`…) se quedan en inglés porque son sintaxis, no vocabulario del
-dominio.
+- El controlador no toca SQL; el servicio no conoce HTTP; el repositorio
+  no conoce HTTP ni reglas de negocio.
+- **Solo el ensamblador** (`Program.cs`) conoce clases concretas — todo
+  lo demás recibe interfaces por constructor.
+- El negocio comunica problemas con excepciones (`ConflictoExcepcion` →
+  400 · `NoEncontradoExcepcion` → 404) y el controlador las traduce a
+  HTTP.
 
-## Artículo 9 — La especificación manda
-Si el código hace algo que la spec de la entrega no pide, sobra y se
-retira. Si la spec pide algo que el código no hace, falta y se agrega.
-No se anticipan funcionalidades de entregas futuras (YAGNI): la Entrega 1
-no construye nada de la Entrega 2 "por si acaso".
+```mermaid
+flowchart TB
+    subgraph API["api_innovacion — las cuatro capas"]
+        C["Controller<br/>(HTTP: códigos y JSON)"]
+        IS["IServicio&lt;Tabla&gt;<br/>&lt;&lt;interfaz&gt;&gt;"]
+        S["Servicio&lt;Tabla&gt;<br/>(reglas de negocio)"]
+        IR["IRepositorio&lt;Tabla&gt;<br/>&lt;&lt;interfaz&gt;&gt;"]
+        R["Repositorio&lt;Tabla&gt;<br/>(SQL parametrizado, Dapper)"]
+    end
+    BD[("PostgreSQL<br/>innovacion_curricular")]
+    C -->|"conoce SOLO la interfaz"| IS
+    S -.->|implementa| IS
+    S -->|"conoce SOLO la interfaz"| IR
+    R -.->|implementa| IR
+    R -->|"SQL con Dapper"| BD
+```
 
-## Artículo 10 — Un solo comando levanta todo
-El proyecto completo (base de datos, API, frontend) arranca con
-`docker compose up -d --build`, parado en la raíz del repositorio. Nadie
-necesita instalar PostgreSQL ni el SDK de .NET localmente para probarlo.
+## Artículo 4 — Un solo comando
 
-## Artículo 11 — Control de versiones por rama
-Repositorio independiente para la API y otro para el frontend. Nadie
-hace commits directos a `main`. Cada integrante trabaja en su propia
-rama y la integra a `main` mediante Pull Request cuando su parte está
-lista y probada.
+`docker compose up -d --build` deja TODO el sistema de la entrega en
+curso funcionando: base de datos, API y frontend juntos. El código va
+montado como volumen y corre con `dotnet watch`.
 
-## Artículo 12 — Cerrado es cerrado
-Una entrega con sus criterios de aceptación en verde no se reabre para
-agregarle cosas nuevas; los ajustes van a la entrega siguiente. Si algo
-quedó mal especificado, se anota como deuda de spec en el
-`4_research.md` de la entrega que lo corrige.
+## Artículo 5 — La base de datos viene DADA
 
-## Artículo de enmiendas
-Cualquier cambio a un artículo de esta constitución se propone primero en
-el `4_research.md` de la entrega que lo necesita, con su justificación.
-Si se aprueba, esta constitución sube de versión (1.1, 1.2…) y el cambio
-queda registrado en la tabla de abajo.
+La BD `innovacion_curricular` la entrega el profesor en
+`db/00_innovacion_curricular.pg.sql` (25 tablas) — se copia tal cual, no
+se edita. Lo que una entrega necesite y el script no traiga (como la
+columna `activo`) se agrega en un script **adicional y numerado** dentro
+de `db/` (`01_alter_activo.sql`, `02_…`), nunca tocando el original.
 
-## Historial de cambios
+## Artículo 6 — Todo en español, comentado para principiantes
 
-| Versión | Fecha | Cambio |
-|---|---|---|
-| 1.0 | (reconstruida junto con el spec kit de la Entrega 1) | Versión inicial, alcance: todas las entregas del módulo |
+Nombres, rutas, mensajes, comentarios y documentación: **en español**. El
+código lleva comentarios explicando qué hace cada bloque — el repositorio
+es también material de estudio del equipo.
+
+## Artículo 7 — Contratos exactos
+
+Los endpoints, formatos y códigos de estado de cada entrega están en su
+`6_contracts.md` y se cumplen al pie de la letra. En la Entrega 1 solo
+existe `PUT` (reemplazo completo, sin la llave primaria) — no se
+implementa `PATCH`, porque ninguna spec lo pidió (Artículo 1).
+
+## Artículo 8 — Convenciones fijas
+
+| Cosa | Convención |
+|---|---|
+| Puertos | API **8080** · Frontend **8081** · PostgreSQL **15432** (mapeado del 5432 interno, para no chocar con un PostgreSQL local) |
+| Rutas | `/` (diagnóstico) · `/swagger` (documentación interactiva) · `/api/{tabla}` (recurso REST) |
+| Nombres | PascalCase en español; interfaces con prefijo `I`; carpetas `Controllers/ Modelos/ Peticiones/ Servicios/ Repositorios/ Excepciones/` |
+| Sobre de respuesta | Lecturas: arreglo JSON directo · Errores de negocio: `{ "mensaje": "..." }` · Errores de validación del body: `ValidationProblemDetails` estándar de ASP.NET Core |
+| Errores | Body inválido → **400** · `ConflictoExcepcion` (llave repetida) → **400** · `NoEncontradoExcepcion` → **404** · error no previsto → **500** |
+| Llaves primarias | Las 22 tablas propias del módulo son `INT` sin autoincremento: el id/nit lo envía quien crea el registro (excepción: `usuario`, `rol`, `rol_usuario`, que sí son `SERIAL`) |
+| Credenciales (didácticas) | BD: `postgres` / `Diseno123!` · base `innovacion_curricular` |

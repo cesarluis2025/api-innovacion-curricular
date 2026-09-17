@@ -1,89 +1,30 @@
-# 6_contracts.md — Versión 1: catálogos sin llave foránea
+# 6_contracts.md — Entrega 1: catálogos sin llave foránea
 
-Las 7 tablas exponen el mismo patrón de 5 endpoints. Se documenta
-completo para `area_conocimiento` (representativa de las 6 que usan
-`id`) y para `aliado` (representativa por usar `nit`); las otras 5 solo
-listan sus rutas y campos propios, porque los códigos de respuesta y el
-formato son idénticos.
+> Formato de errores y códigos según el Artículo 8 de la constitución.
 
----
+## `area_conocimiento` (documentado completo; representa a las 6 tablas con `id`)
 
-## `area_conocimiento`
+| Verbo y ruta | Body | Éxito | Errores |
+|---|---|---|---|
+| `GET /api/area_conocimiento` | — | `200` arreglo `[{id, granArea, area, disciplina, activo}]` | — |
+| `GET /api/area_conocimiento/{id}` | — | `200` el objeto | `404` `{ "mensaje": "no existe un área de conocimiento con id {id}" }` |
+| `POST /api/area_conocimiento` | `{id, granArea, area, disciplina}` | `201` objeto creado, header `Location` | `400` duplicado: `{ "mensaje": "ya existe un área de conocimiento con id {id}" }` · `400` validación: `ValidationProblemDetails` |
+| `PUT /api/area_conocimiento/{id}` | `{granArea, area, disciplina}` | `200` objeto actualizado | `404` igual al `GET` |
+| `DELETE /api/area_conocimiento/{id}` | — | `204` (marca `activo=false`) | `404` igual al `GET` |
 
-### `GET /api/area_conocimiento`
-- **200 OK**
-```json
-[
-  { "id": 1, "granArea": "...", "area": "...", "disciplina": "...", "activo": true }
-]
-```
+## `aliado` (llave primaria `nit`, no `id` — decisión D6)
 
-### `GET /api/area_conocimiento/{id}`
-- **200 OK** — el objeto tal como arriba.
-- **404 Not Found**
-```json
-{ "mensaje": "no existe un área de conocimiento con id {id}" }
-```
+| Verbo y ruta | Body | Éxito | Errores |
+|---|---|---|---|
+| `GET /api/aliado` | — | `200` arreglo `[{nit, razonSocial, nombreContacto, correo, telefono, ciudad, activo}]` | — |
+| `GET /api/aliado/{nit}` | — | `200` el objeto | `404` `{ "mensaje": "no existe un aliado con nit {nit}" }` |
+| `POST /api/aliado` | `{nit, razonSocial, nombreContacto, correo, telefono, ciudad}` | `201` | `400` duplicado / validación |
+| `PUT /api/aliado/{nit}` | sin `nit` | `200` | `404` |
+| `DELETE /api/aliado/{nit}` | — | `204` | `404` |
 
-### `POST /api/area_conocimiento`
-Body:
-```json
-{ "id": 1, "granArea": "...", "area": "...", "disciplina": "..." }
-```
-- **201 Created** — devuelve el objeto creado, header `Location` apuntando a `GET /api/area_conocimiento/{id}`.
-- **400 Bad Request** (id repetido)
-```json
-{ "mensaje": "ya existe un área de conocimiento con id {id}" }
-```
-- **400 Bad Request** (validación: campo vacío o más largo que el máximo)
-```json
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "One or more validation errors occurred.",
-  "status": 400,
-  "errors": { "GranArea": ["..."] }
-}
-```
+## Las otras 5 tablas — mismo patrón, mismos códigos (200/201/204/400/404)
 
-### `PUT /api/area_conocimiento/{id}`
-Body: igual al de creación, sin `id`.
-- **200 OK** — el objeto actualizado.
-- **404 Not Found** — mismo formato del `GET` por id.
-
-### `DELETE /api/area_conocimiento/{id}`
-- **204 No Content** — el registro queda con `activo = false`.
-- **404 Not Found** — mismo formato del `GET` por id (aplica si ya estaba inactivo o nunca existió).
-
----
-
-## `aliado` (llave primaria `nit`, no `id`)
-
-### `GET /api/aliado`
-- **200 OK**
-```json
-[
-  { "nit": 900123456, "razonSocial": "...", "nombreContacto": "...", "correo": "...", "telefono": "...", "ciudad": "...", "activo": true }
-]
-```
-
-### `GET /api/aliado/{nit}`
-- **200 OK** / **404 Not Found** — `{ "mensaje": "no existe un aliado con nit {nit}" }`
-
-### `POST /api/aliado`
-Body: `{ "nit": ..., "razonSocial": "...", "nombreContacto": "...", "correo": "...", "telefono": "...", "ciudad": "..." }`
-- **201 Created** / **400 Bad Request** — `{ "mensaje": "ya existe un aliado con nit {nit}" }` o error de validación (mismo formato que `area_conocimiento`).
-
-### `PUT /api/aliado/{nit}`
-Body: igual sin `nit`. **200 OK** / **404 Not Found**.
-
-### `DELETE /api/aliado/{nit}`
-**204 No Content** / **404 Not Found**.
-
----
-
-## Las otras 5 tablas (mismo patrón, mismos códigos 200/201/204/400/404)
-
-| Tabla | Ruta base | Campos del body (POST/PUT, sin el id) |
+| Tabla | Ruta base | Campos del body (sin id) |
 |---|---|---|
 | `universidad` | `/api/universidad` | `nombre`, `tipo`, `ciudad` |
 | `aspecto_normativo` | `/api/aspecto_normativo` | `tipo`, `descripcion`, `fuente` |
@@ -91,8 +32,6 @@ Body: igual sin `nit`. **200 OK** / **404 Not Found**.
 | `enfoque` | `/api/enfoque` | `nombre`, `descripcion` |
 | `car_innovacion` | `/api/car_innovacion` | `nombre`, `descripcion`, `tipo` |
 
-Para cada una: `GET /{ruta}` (200, arreglo), `GET /{ruta}/{id}` (200 o 404),
-`POST /{ruta}` (201 con el objeto creado, o 400 con `{ "mensaje": "ya
-existe [tabla] con id {id}" }`, o 400 de validación), `PUT /{ruta}/{id}`
-(200 o 404), `DELETE /{ruta}/{id}` (204 o 404). El mensaje de "no existe"
-sigue el mismo formato, cambiando solo el nombre de la entidad.
+El mensaje `"ya existe [tabla] con id {id}"` / `"no existe [tabla] con id
+{id}"` cambia solo el nombre de la entidad; el formato es idéntico en las
+7 tablas.
