@@ -34,14 +34,14 @@ public class CarInnovacionServicio : ICarInnovacionServicio
         if (await _repositorio.ExisteIdAsync(peticion.Id))
             throw new ConflictoExcepcion($"ya existe una característica de innovación con id {peticion.Id}");
 
-        var entidad = new CarInnovacion { Id = peticion.Id, Nombre = peticion.Nombre, Descripcion = peticion.Descripcion, Tipo = peticion.Tipo };
+        var entidad = new CarInnovacion { Id = peticion.Id, Nombre = peticion.Nombre, Descripcion = peticion.Descripcion, Tipo = peticion.Tipo, Activo = true };
         await _repositorio.CrearAsync(entidad);
         return entidad;
     }
 
     public async Task<CarInnovacion> ActualizarAsync(int id, ActualizarCarInnovacionPeticion peticion)
     {
-        var entidad = new CarInnovacion { Id = id, Nombre = peticion.Nombre, Descripcion = peticion.Descripcion, Tipo = peticion.Tipo };
+        var entidad = new CarInnovacion { Id = id, Nombre = peticion.Nombre, Descripcion = peticion.Descripcion, Tipo = peticion.Tipo, Activo = true };
         if (!await _repositorio.ActualizarAsync(entidad))
             throw new NoEncontradoExcepcion($"no existe una característica de innovación con id {id}");
         return entidad;

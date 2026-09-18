@@ -42,6 +42,7 @@ public class AliadoServicio : IAliadoServicio
             Correo = peticion.Correo,
             Telefono = peticion.Telefono,
             Ciudad = peticion.Ciudad,
+            Activo = true,  
         };
         await _repositorio.CrearAsync(aliado);
         return aliado;
@@ -57,6 +58,7 @@ public class AliadoServicio : IAliadoServicio
             Correo = peticion.Correo,
             Telefono = peticion.Telefono,
             Ciudad = peticion.Ciudad,
+            Activo = true,
         };
         if (!await _repositorio.ActualizarAsync(aliado))
             throw new NoEncontradoExcepcion($"no existe un aliado con nit {nit}");

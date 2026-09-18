@@ -34,14 +34,14 @@ public class UniversidadServicio : IUniversidadServicio
         if (await _repositorio.ExisteIdAsync(peticion.Id))
             throw new ConflictoExcepcion($"ya existe una universidad con id {peticion.Id}");
 
-        var universidad = new Universidad { Id = peticion.Id, Nombre = peticion.Nombre, Tipo = peticion.Tipo, Ciudad = peticion.Ciudad };
+        var universidad = new Universidad { Id = peticion.Id, Nombre = peticion.Nombre, Tipo = peticion.Tipo, Ciudad = peticion.Ciudad, Activo = true };
         await _repositorio.CrearAsync(universidad);
         return universidad;
     }
 
     public async Task<Universidad> ActualizarAsync(int id, ActualizarUniversidadPeticion peticion)
     {
-        var universidad = new Universidad { Id = id, Nombre = peticion.Nombre, Tipo = peticion.Tipo, Ciudad = peticion.Ciudad };
+        var universidad = new Universidad { Id = id, Nombre = peticion.Nombre, Tipo = peticion.Tipo, Ciudad = peticion.Ciudad, Activo = true };
         if (!await _repositorio.ActualizarAsync(universidad))
             throw new NoEncontradoExcepcion($"no existe una universidad con id {id}");
         return universidad;

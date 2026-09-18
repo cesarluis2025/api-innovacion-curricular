@@ -31,5 +31,18 @@ services:
       - "8080:8080"          # API:      http://localhost:8080
                               # Swagger:  http://localhost:8080/swagger
 
+  frontend:
+    build: ./frontend_innovacion
+    container_name: innovacion_frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    volumes:
+      - ./frontend_innovacion:/app
+    environment:
+      API_URL: "http://api:8080/"
+    ports:
+      - "8081:8081"          # Frontend: http://localhost:8081
+
 volumes:
   db_data:

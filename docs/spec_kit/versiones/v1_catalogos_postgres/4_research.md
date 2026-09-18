@@ -55,3 +55,29 @@ generaría inconsistencia entre el contrato y la base de datos real.
 **Descartada:** un solo repositorio con ambos proyectos.
 **Por qué:** lo exige el PDS explícitamente, y refuerza en la práctica el
 Artículo 1 de separación de capas.
+
+## D8 — Bug encontrado en el smoke test: `Activo` faltaba en la respuesta de Crear/Actualizar
+
+**Qué pasó:** en las 7 tablas, `CrearAsync` y `ActualizarAsync` construían
+el objeto de respuesta sin asignar `Activo` explícitamente. En C#, un
+`bool` sin asignar arranca en `false` por defecto, así que el `POST`/`PUT`
+devolvía `"activo": false` en la respuesta HTTP, **aunque el dato
+guardado en PostgreSQL sí quedaba correctamente en `true`** (porque el
+repositorio sí lo fija en el SQL). Se detectó al correr el criterio 4 del
+smoke test de `7_quickstart.md`.
+
+**Corrección:** se agregó `Activo = true` a la construcción del objeto en
+`CrearAsync` y `ActualizarAsync` de los 7 `{Tabla}Servicio.cs`.
+
+**Por qué no lo detectamos antes:** durante el desarrollo probamos
+mayormente con `GET` después de crear (que sí consulta el dato real de la
+base de datos), no la respuesta inmediata del propio `POST`/`PUT`. El
+smoke test formal, al revisar la respuesta del verbo mismo y no solo un
+`GET` posterior, es justamente lo que expuso la inconsistencia — muestra
+por qué `7_quickstart.md` pide revisar la respuesta de cada verbo, no
+solo el estado final.
+
+**Lección para entregas futuras:** al construir el objeto de respuesta en
+`Crear`/`Actualizar`, asignar **todas** las propiedades del modelo
+explícitamente, incluida cualquier bandera booleana — no asumir el valor
+por defecto del lenguaje.

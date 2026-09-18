@@ -34,14 +34,14 @@ public class PracticaEstrategiaServicio : IPracticaEstrategiaServicio
         if (await _repositorio.ExisteIdAsync(peticion.Id))
             throw new ConflictoExcepcion($"ya existe una práctica/estrategia con id {peticion.Id}");
 
-        var entidad = new PracticaEstrategia { Id = peticion.Id, Tipo = peticion.Tipo, Nombre = peticion.Nombre, Descripcion = peticion.Descripcion };
+        var entidad = new PracticaEstrategia { Id = peticion.Id, Tipo = peticion.Tipo, Nombre = peticion.Nombre, Descripcion = peticion.Descripcion, Activo = true };
         await _repositorio.CrearAsync(entidad);
         return entidad;
     }
 
     public async Task<PracticaEstrategia> ActualizarAsync(int id, ActualizarPracticaEstrategiaPeticion peticion)
     {
-        var entidad = new PracticaEstrategia { Id = id, Tipo = peticion.Tipo, Nombre = peticion.Nombre, Descripcion = peticion.Descripcion };
+        var entidad = new PracticaEstrategia { Id = id, Tipo = peticion.Tipo, Nombre = peticion.Nombre, Descripcion = peticion.Descripcion, Activo = true };
         if (!await _repositorio.ActualizarAsync(entidad))
             throw new NoEncontradoExcepcion($"no existe una práctica/estrategia con id {id}");
         return entidad;

@@ -42,6 +42,7 @@ public class AreaConocimientoServicio : IAreaConocimientoServicio
             GranArea = peticion.GranArea,
             Area = peticion.Area,
             Disciplina = peticion.Disciplina,
+            Activo = true,
         };
         await _repositorio.CrearAsync(area);
         return area;
@@ -55,6 +56,7 @@ public class AreaConocimientoServicio : IAreaConocimientoServicio
             GranArea = peticion.GranArea,
             Area = peticion.Area,
             Disciplina = peticion.Disciplina,
+            Activo = true
         };
         var actualizado = await _repositorio.ActualizarAsync(area);
         if (!actualizado)

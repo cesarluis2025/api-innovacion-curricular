@@ -34,14 +34,14 @@ public class AspectoNormativoServicio : IAspectoNormativoServicio
         if (await _repositorio.ExisteIdAsync(peticion.Id))
             throw new ConflictoExcepcion($"ya existe un aspecto normativo con id {peticion.Id}");
 
-        var entidad = new AspectoNormativo { Id = peticion.Id, Tipo = peticion.Tipo, Descripcion = peticion.Descripcion, Fuente = peticion.Fuente };
+        var entidad = new AspectoNormativo { Id = peticion.Id, Tipo = peticion.Tipo, Descripcion = peticion.Descripcion, Fuente = peticion.Fuente, Activo = true };
         await _repositorio.CrearAsync(entidad);
         return entidad;
     }
 
     public async Task<AspectoNormativo> ActualizarAsync(int id, ActualizarAspectoNormativoPeticion peticion)
     {
-        var entidad = new AspectoNormativo { Id = id, Tipo = peticion.Tipo, Descripcion = peticion.Descripcion, Fuente = peticion.Fuente };
+        var entidad = new AspectoNormativo { Id = id, Tipo = peticion.Tipo, Descripcion = peticion.Descripcion, Fuente = peticion.Fuente, Activo = true };
         if (!await _repositorio.ActualizarAsync(entidad))
             throw new NoEncontradoExcepcion($"no existe un aspecto normativo con id {id}");
         return entidad;

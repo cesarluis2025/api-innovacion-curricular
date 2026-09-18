@@ -34,14 +34,14 @@ public class EnfoqueServicio : IEnfoqueServicio
         if (await _repositorio.ExisteIdAsync(peticion.Id))
             throw new ConflictoExcepcion($"ya existe un enfoque con id {peticion.Id}");
 
-        var entidad = new Enfoque { Id = peticion.Id, Nombre = peticion.Nombre, Descripcion = peticion.Descripcion };
+        var entidad = new Enfoque { Id = peticion.Id, Nombre = peticion.Nombre, Descripcion = peticion.Descripcion, Activo = true };
         await _repositorio.CrearAsync(entidad);
         return entidad;
     }
 
     public async Task<Enfoque> ActualizarAsync(int id, ActualizarEnfoquePeticion peticion)
     {
-        var entidad = new Enfoque { Id = id, Nombre = peticion.Nombre, Descripcion = peticion.Descripcion };
+        var entidad = new Enfoque { Id = id, Nombre = peticion.Nombre, Descripcion = peticion.Descripcion, Activo = true };
         if (!await _repositorio.ActualizarAsync(entidad))
             throw new NoEncontradoExcepcion($"no existe un enfoque con id {id}");
         return entidad;
