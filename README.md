@@ -8,48 +8,36 @@ Equipo: Carlos Adrián Rentería Machado, Cesar Luis Mosquera García. Diseño d
 Requisitos: Docker Desktop instalado y corriendo.
 
 ```
+Copy-Item env.example.txt .env     # y edite .env: ponga su propia DB_PASSWORD
 docker compose up -d --build
 ```
 
 Esto levanta tres contenedores:
 
-- **db**: PostgreSQL con la base `innovacion_curricular` (script del profesor + columna `activo` agregada)
+- **db**: PostgreSQL con la base `innovacion_curricular` (script del profesor, columnas nuevas, 115 funciones `sp_*`, disparador y datos de referencia)
 - **api**: la API REST → http://localhost:8080 (documentación interactiva en http://localhost:8080/swagger)
-- **frontend**: la interfaz web → http://localhost:8081/AreaConocimiento
+- **frontend**: la interfaz web → http://localhost:8081
+
+La primera vez, espere 60 a 90 segundos a que `dotnet watch` compile.
 
 ## Estructura
 
-- `db/` — scripts SQL que se ejecutan al crear la base de datos
-  - `00_innovacion_curricular.pg.sql` — el script original del profesor, sin modificar
-  - `01_alter_activo.sql` — agrega la columna `activo` a las 22 tablas del módulo (el script original no la traía)
-- `api_innovacion/` — backend en C#/ASP.NET Core (Controllers → Servicios → Repositorios → Modelos), acceso a datos con Dapper
-- `frontend_innovacion/` — frontend en Razor Pages (C#/ASP.NET Core), consume la API por HTTP; nunca toca la base de datos directo
-- `docker-compose.yml` — orquesta los tres servicios juntos
+- `db/` — scripts SQL que se ejecutan al crear la base de datos, en orden numérico
+- `api_innovacion/` — backend en C#/ASP.NET Core (Controllers → Servicios → Repositorios → Modelos); todo el acceso a datos pasa por funciones `sp_*`
+- `frontend_innovacion/` — frontend en Razor Pages, consume la API por HTTP (nunca toca la base de datos directo)
+- `pruebas/` — `v2_pruebas.ps1` corre los 12 criterios y la regresión de la v1; `evidencia_v2.txt` es su última salida
+- `docs/spec_kit/` — constitución y documentación de la metodología del proyecto (spec kit de cada versión)
 
-## Decisiones técnicas
+## Estado — Versión 2 (las 22 tablas del módulo)
 
-- **Borrado lógico**: ninguna operación hace `DELETE`; eliminar marca `activo = false`. Los listados solo muestran `activo = true`.
-- **ID manual**: las llaves primarias del script original son `INT` sin autoincremento (no `SERIAL`), así que el ID se digita en el formulario de creación, no se genera solo.
-- **Separación de repositorios**: `api_innovacion` y `frontend_innovacion` viven en repositorios de GitHub independientes, comunicándose solo por HTTP/JSON.
+- [x] Las 22 tablas con CRUD completo en API e interfaz (borrado lógico con `activo`)
+- [x] Todos los verbos por procedimientos almacenados (115 funciones)
+- [x] Disparador: `facultad.total_programas` se mantiene solo
+- [x] Las llaves foráneas son desplegables con nombres, cargados desde la API; las opcionales aceptan «(ninguna)»
+- [x] Tablas puente: asignar, repetir (409), retirar y reactivar
+- [x] Maestro-detalle: varias filas en una sola petición, todo o nada
+- [x] Hijo con padre inexistente o llave repetida → 409, nunca 500
+- [x] Regresión de la v1
+- [ ] Merge a main y tag `v2` (lo hace el encargado del main, en los dos repositorios)
 
-## Repositorios
-
-- API: https://github.com/cesarluis2025/api-innovacion-curricular
-- Frontend: https://github.com/cesarluis2025/frontend-innovacion-curricular
-
-Cada repositorio tiene tres ramas: `main`, `carlos-dev`, `cesar-dev`.
-
-## Estado — Entrega 1 (catálogos sin llave foránea)
-
-Tablas con CRUD completo (crear, listar, editar, eliminar lógico) en API y frontend:
-
-- [x] área_conocimiento
-- [x] universidad
-- [x] aspecto_normativo
-- [x] practica_estrategia
-- [x] enfoque
-- [x] car_innovacion
-- [x] aliado
-
-Datos cargados actualmente: registros de prueba creados manualmente vía Swagger, para demostrar el CRUD.
-Pendiente: cargar los datos de referencia oficiales del profesor (218 área_conocimiento, 6 universidad, etc.) cuando se disponga del archivo Excel.
+Para verificar: `powershell -ExecutionPolicy Bypass -File .\pruebas\v2_pruebas.ps1`
