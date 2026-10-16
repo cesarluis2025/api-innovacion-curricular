@@ -161,7 +161,7 @@ Convenciones: `PK` llave primaria, `FK→` llave foránea, `NN` no nulo. Los tip
 | `h_acom` | INT | NN | |
 | `h_indep` | INT | NN | |
 | `idioma` | VARCHAR(45) | NN | |
-| `espejo` | SMALLINT | NN | 0 o 1 (D-v2-14) |
+| `espejo` | SMALLINT | NN | 0 o 1 (D-v2-14). Las funciones `sp_crear_/sp_actualizar_` lo reciben como `INT` y lo convierten adentro: PostgreSQL no acepta un `int4` donde la función espera `smallint`, y C# envía `int` |
 | `entidad_espejo` | VARCHAR(45) | NN | «No aplica» si `espejo = 0` (D-v2-14) |
 | `pais_espejo` | VARCHAR(45) | NN | «No aplica» si `espejo = 0` (D-v2-14) |
 | `disenio` | INT | **sí** | FK→`programa(id)`: el programa que la diseñó; «(ninguna)» → `null` |

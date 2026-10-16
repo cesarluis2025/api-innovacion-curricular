@@ -205,7 +205,8 @@ del script solo comprueban que la fila padre **exista**; un padre retirado
 colgado de él, y `2_spec.md` (RF4, RF9) lo prohíbe.
 **Decisión:** dentro de cada función que escribe un hijo, antes del `INSERT` o
 `UPDATE`, se comprueba `EXISTS (SELECT 1 FROM padre WHERE id = p AND activo)`;
-si no, `RAISE EXCEPTION ... USING ERRCODE = '23503', TABLE = '<padre>', COLUMN = '<campo>'`.
+si no, `RAISE EXCEPTION ... USING ERRCODE = '23503', TABLE = '<tabla hija>', COLUMN = '<campo>'`
+(la tabla que se está escribiendo, igual que reporta una llave foránea real).
 **Descartada:** confiar solo en la llave foránea, o validar en el servicio con
 una consulta previa (misma carrera de D-v2-3).
 **Por qué:** usar el **mismo** código `23503` que lanza una FK real hace que el
