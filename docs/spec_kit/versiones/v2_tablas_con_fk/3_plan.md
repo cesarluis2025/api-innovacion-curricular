@@ -166,12 +166,11 @@ vuelve ya trae el efecto del disparador.
 
 1. Secretos: `.env`, `.env.example`, `docker-compose.yml`, `.gitignore`.
 2. Base: scripts `02` a `06` aplicados y probados con `psql`, **antes** de tocar C#.
-3. Migrar las 7 tablas de la v1 a `sp_*` y correr la regresión.
-4. Manejador de errores 409.
-5. Las 7 entidades con FK; después las 8 tablas puente.
-6. Lotes del maestro-detalle.
-7. Frontend: desplegables y pantallas de detalle.
-8. Colección de pruebas, regresión completa, `GUIA_IA2.md`, tag `v2`.
+3. Manejador de errores 409 y migración de las 7 tablas de la v1 a `sp_*`, juntos, porque la regresión de la v1 ya espera 409; se corre la regresión.
+4. Las 7 entidades con FK; después las 8 tablas puente.
+5. Lotes del maestro-detalle.
+6. Frontend: desplegables y pantallas de detalle.
+7. Colección de pruebas, regresión completa, `GUIA_IA2.md`, tag `v2`.
 
 ---
 

@@ -94,6 +94,7 @@ $prog = @{ id=99999; nombre='Programa de prueba'; tipo='Programa Académico'; ni
 | 10 | …y sigue en la base | `SELECT id, activo FROM programa WHERE id = 99999` | una fila con `activo` en `f` (falso) |
 | B1 | Maestro con detalle | `Probar DELETE /api/facultad/101` | `409` («tiene registros activos») |
 | Lote | Todo o nada | `POST /api/programa/10101/acreditaciones/lote` con 2 renglones y el segundo con una `resolucion` repetida | `409` y **ninguno** guardado |
+| 9 | Detalle de una universidad | `GET /api/universidad/{id}/facultades` con el id de la universidad a la que pertenece la facultad 101 | `200` y la lista incluye la facultad 101 |
 | 3 | Sin SQL en C# | `Select-String -Path api_innovacion\Repositorios\*.cs -Pattern "SELECT\|INSERT\|UPDATE\|DELETE" \| Where-Object { $_.Line -notmatch "FROM sp_" }` | **sin resultados** |
 
 **El disparador (criterio 4)** se prueba por la API y se lee en la base, sin que
@@ -133,7 +134,8 @@ los tres cambios que registra `6_contracts.md`:
 | Criterio de la v1 | Cambio en la regresión |
 |---|---|
 | Crear con un id existente | ahora **409**, no 400 |
-| Campo que excede su longitud | usa los límites nuevos: `disciplina` 130, `programa.nombre` 100 |
+| Campo que excede su longitud | usa el límite nuevo de `disciplina`: 130 (el de `programa.nombre`, 100, es de una tabla nueva y se prueba en §3) |
+| Rutas nuevas del maestro (`GET /api/universidad/{id}/facultades` y su lote) | no existen en la v1, no hay criterio que cambiar; se prueban en §3 |
 | El resto (crear → listar → editar → retirar; `activo = false` en la base) | igual |
 
 ## Cierre
