@@ -48,8 +48,8 @@ public class ActivAcademicaServicio : IActivAcademicaServicio
             HIndep = peticion.HIndep,
             Idioma = peticion.Idioma,
             Espejo = peticion.Espejo,
-            EntidadEspejo = peticion.EntidadEspejo,
-            PaisEspejo = peticion.PaisEspejo,
+            EntidadEspejo = TextoEspejo(peticion.Espejo, peticion.EntidadEspejo),
+            PaisEspejo = TextoEspejo(peticion.Espejo, peticion.PaisEspejo),
             Disenio = peticion.Disenio,
         };
         return await _repositorio.CrearAsync(fila);
@@ -68,8 +68,8 @@ public class ActivAcademicaServicio : IActivAcademicaServicio
             HIndep = peticion.HIndep,
             Idioma = peticion.Idioma,
             Espejo = peticion.Espejo,
-            EntidadEspejo = peticion.EntidadEspejo,
-            PaisEspejo = peticion.PaisEspejo,
+            EntidadEspejo = TextoEspejo(peticion.Espejo, peticion.EntidadEspejo),
+            PaisEspejo = TextoEspejo(peticion.Espejo, peticion.PaisEspejo),
             Disenio = peticion.Disenio,
         };
         var guardada = await _repositorio.ActualizarAsync(fila);
@@ -83,4 +83,8 @@ public class ActivAcademicaServicio : IActivAcademicaServicio
         if (!await _repositorio.EliminarLogicoAsync(id))
             throw new NoEncontradoExcepcion($"no existe una actividad académica con id {id}");
     }
+
+    // D-v2-14: si la actividad no es espejo, la base pide un texto igualmente; se guarda «No aplica».
+    private static string TextoEspejo(int espejo, string? texto)
+        => espejo == 0 ? "No aplica" : texto!.Trim();
 }

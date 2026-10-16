@@ -55,6 +55,23 @@ builder.Services.AddScoped<IPasantiaRepositorio, PasantiaRepositorio>();
 builder.Services.AddScoped<IPasantiaServicio, PasantiaServicio>();
 builder.Services.AddScoped<IPremioRepositorio, PremioRepositorio>();
 builder.Services.AddScoped<IPremioServicio, PremioServicio>();
+// v2, fase 9: las 8 tablas puente.
+builder.Services.AddScoped<IProgramaAcRepositorio, ProgramaAcRepositorio>();
+builder.Services.AddScoped<IProgramaAcServicio, ProgramaAcServicio>();
+builder.Services.AddScoped<IProgramaPeRepositorio, ProgramaPeRepositorio>();
+builder.Services.AddScoped<IProgramaPeServicio, ProgramaPeServicio>();
+builder.Services.AddScoped<IProgramaCiRepositorio, ProgramaCiRepositorio>();
+builder.Services.AddScoped<IProgramaCiServicio, ProgramaCiServicio>();
+builder.Services.AddScoped<IAnProgramaRepositorio, AnProgramaRepositorio>();
+builder.Services.AddScoped<IAnProgramaServicio, AnProgramaServicio>();
+builder.Services.AddScoped<IEnfoqueRcRepositorio, EnfoqueRcRepositorio>();
+builder.Services.AddScoped<IEnfoqueRcServicio, EnfoqueRcServicio>();
+builder.Services.AddScoped<IAaRcRepositorio, AaRcRepositorio>();
+builder.Services.AddScoped<IAaRcServicio, AaRcServicio>();
+builder.Services.AddScoped<IDocenteDepartamentoRepositorio, DocenteDepartamentoRepositorio>();
+builder.Services.AddScoped<IDocenteDepartamentoServicio, DocenteDepartamentoServicio>();
+builder.Services.AddScoped<IAlianzaRepositorio, AlianzaRepositorio>();
+builder.Services.AddScoped<IAlianzaServicio, AlianzaServicio>();
 
 var app = builder.Build();
 

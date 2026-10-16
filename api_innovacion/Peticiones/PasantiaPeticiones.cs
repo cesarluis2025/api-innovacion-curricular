@@ -4,7 +4,7 @@ namespace ApiInnovacionCurricular.Peticiones;
 
 // Lo que llega en el body de POST /api/pasantia. Las anotaciones hacen que
 // ASP.NET Core responda 400 solo, antes de entrar al controlador.
-// // programa es la llave foránea: el frontend la llena con un desplegable, nunca se digita. Si no existe o está retirada, la base responde 23503 y la API 409.
+// programa es la llave foránea: el frontend la llena con un desplegable, nunca se digita. Si no existe o está retirada, la base responde 23503 y la API 409.
 public class CrearPasantiaPeticion
 {
     public int Id { get; set; }
