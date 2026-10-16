@@ -69,11 +69,11 @@ traduce los errores de la base a códigos HTTP.
 
 | # | Requisito |
 |---|---|
-| RF1 | Los 5 verbos de las 22 tablas pasan por `sp_*`; el repositorio solo **llama** al procedimiento con parámetros. La única sentencia permitida en C# es la llamada `SELECT * FROM sp_xxx(...)`; ningún `SELECT`/`INSERT`/`UPDATE`/`DELETE` sobre tablas. |
+| RF1 | Cada verbo de las 22 tablas pasa por `sp_*` (5 verbos en 17 tablas; 4 en los 5 puentes de solo llaves, que no se editan, RF6); el repositorio solo **llama** al procedimiento con parámetros. La única sentencia permitida en C# es la llamada `SELECT * FROM sp_xxx(...)`; ningún `SELECT`/`INSERT`/`UPDATE`/`DELETE` sobre tablas. |
 | RF2 | Tablas con `activo`: `sp_eliminar_*` hace `UPDATE … SET activo = false` (la columna es booleana en el esquema dado) y todo listado filtra inactivos. |
 | RF3 | `sp_crear_*` y `sp_actualizar_*` devuelven la fila como quedó guardada (valores por defecto y cálculos del disparador incluidos). |
 | RF4 | Crear un hijo cuyo padre no existe (o está inactivo) → **409** con mensaje que nombra el campo. |
-| RF5 | Repetir la misma pareja en una tabla puente (o cualquier llave primaria) → **409**. |
+| RF5 | Repetir una pareja **activa** en una tabla puente, o cualquier llave primaria ya existente → **409**; una pareja retirada se reactiva (B6) y responde 201. |
 | RF6 | Tablas puente: se **asignan** y se **retiran** con sus dos llaves; **no** tienen botón ni verbo de editar cuando solo contienen llaves. Las que tienen campos propios (`aa_rc`, `docente_departamento`, `alianza`) sí se actualizan. |
 | RF7 | Un detalle no existe sin su maestro: la interfaz lo crea desde la pantalla del maestro, con el maestro ya fijado. |
 | RF8 | Varios renglones de detalle se registran en **una sola petición** y **una sola transacción**: si falla uno, no se guarda ninguno. |
@@ -90,7 +90,7 @@ traduce los errores de la base a códigos HTTP.
 |---|---|---|
 | 1 | Tablas de la v1: CRUD + interfaz | Se abre cada una: crear, editar, retirar |
 | 2 | Tablas de la v2: CRUD + interfaz | Las 15, una por una |
-| 3 | Los 5 verbos pasan por procedimientos | `grep` en los repositorios: ninguna línea con `SELECT`/`INSERT`/`UPDATE`/`DELETE` que no sea una llamada `FROM sp_` |
+| 3 | Todos los verbos pasan por procedimientos (115 funciones `sp_*` en total, ver `7_quickstart.md` §2) | `grep` en los repositorios: ninguna línea con `SELECT`/`INSERT`/`UPDATE`/`DELETE` que no sea una llamada `FROM sp_` |
 | 4 | Disparador funciona | Se agrega/retira un detalle por la interfaz y cambia el contador solo |
 | 5 | Cada FK es un desplegable de la API | Lleno, con nombres (p. ej. facultad → nombre de universidad) |
 | 6 | FK opcional acepta «(ninguna)» | Crear `activ_academica` sin `disenio` |
@@ -120,6 +120,7 @@ traduce los errores de la base a códigos HTTP.
 
 | Versión | Fecha | Cambio |
 |---|---|---|
+| 2.4 | 2026-10-16 | Compuerta 3: RF1 y criterio 3 cuentan 4 verbos en los 5 puentes de solo llaves (contradecían a RF6); RF5 distingue pareja activa de retirada (contradecía a B6) |
 | 2.3 | 2026-10-16 | B7 detallada: origen de los datos, ampliación de dos columnas y valores de relleno (D-v2-12) |
 | 2.2 | 2026-10-15 | Compuerta 1 cerrada: B1–B7 resueltas, sin `[NECESITA ACLARACIÓN]` pendientes |
 | 2.1 | 2026-10-15 | Se agregan diagrama de contexto, compuerta 1 (clarificaciones), secretos (RF13) y comentarios (RF14) según 0_METODOLOGIA.md |
