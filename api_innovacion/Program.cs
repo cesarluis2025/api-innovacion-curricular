@@ -40,6 +40,21 @@ builder.Services.AddScoped<ICarInnovacionRepositorio, CarInnovacionRepositorio>(
 builder.Services.AddScoped<ICarInnovacionServicio, CarInnovacionServicio>();
 builder.Services.AddScoped<IAliadoRepositorio, AliadoRepositorio>();
 builder.Services.AddScoped<IAliadoServicio, AliadoServicio>();
+// v2, fase 8: las 7 entidades con llave foránea.
+builder.Services.AddScoped<IFacultadRepositorio, FacultadRepositorio>();
+builder.Services.AddScoped<IFacultadServicio, FacultadServicio>();
+builder.Services.AddScoped<IProgramaRepositorio, ProgramaRepositorio>();
+builder.Services.AddScoped<IProgramaServicio, ProgramaServicio>();
+builder.Services.AddScoped<IAcreditacionRepositorio, AcreditacionRepositorio>();
+builder.Services.AddScoped<IAcreditacionServicio, AcreditacionServicio>();
+builder.Services.AddScoped<IRegistroCalificadoRepositorio, RegistroCalificadoRepositorio>();
+builder.Services.AddScoped<IRegistroCalificadoServicio, RegistroCalificadoServicio>();
+builder.Services.AddScoped<IActivAcademicaRepositorio, ActivAcademicaRepositorio>();
+builder.Services.AddScoped<IActivAcademicaServicio, ActivAcademicaServicio>();
+builder.Services.AddScoped<IPasantiaRepositorio, PasantiaRepositorio>();
+builder.Services.AddScoped<IPasantiaServicio, PasantiaServicio>();
+builder.Services.AddScoped<IPremioRepositorio, PremioRepositorio>();
+builder.Services.AddScoped<IPremioServicio, PremioServicio>();
 
 var app = builder.Build();
 
