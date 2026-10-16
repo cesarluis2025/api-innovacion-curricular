@@ -32,8 +32,9 @@
   SQL vive en procedimientos almacenados** versionados en `db/`
   (`sp_listar_`, `sp_consultar_`, `sp_crear_`, `sp_actualizar_`,
   `sp_eliminar_` + tabla). El repositorio **solo los llama**, con
-  parámetros (`@parametro`); nunca contiene SQL escrito a mano ni armado
-  concatenando texto. El ejecutor es **Dapper**: mapea fila→objeto pero
+  parámetros (`@parametro`): su única sentencia es la llamada
+  `SELECT * FROM sp_xxx(@p1, …)`; nunca contiene `SELECT`, `INSERT`, `UPDATE` ni
+  `DELETE` sobre tablas, ni SQL armado concatenando texto. El ejecutor es **Dapper**: mapea fila→objeto pero
   JAMÁS genera SQL por nosotros.
 - Frontend en **ASP.NET Core Razor Pages** — mismo lenguaje, sin
   introducir un segundo ecosistema (Node/npm) mientras ninguna spec lo
@@ -136,6 +137,7 @@ implementa `PATCH`, porque ninguna spec lo pidió (Artículo 1).
 |---|---|---|---|
 | 2026-10-15 | 1 | «Entregas» pasa a «versiones»; la prohibición de anticipar se redacta por contenido y por mapa de versiones, no por «tablas con FK» | La v2 es justamente la que pide las tablas con FK; la metodología habla de versiones (`0_METODOLOGIA.md` §2) |
 | 2026-10-15 | 2 | El SQL deja de escribirse a mano en C#: vive en procedimientos almacenados en `db/` y el repositorio solo los llama | `VERSION_2.md` §4 y criterio 3: los cinco verbos de todas las tablas pasan por procedimientos |
+| 2026-10-15 | 2 (precisión) | Se aclara que la llamada `SELECT * FROM sp_xxx(...)` es la única sentencia permitida en el repositorio | Npgsql 7+ con `CommandType.StoredProcedure` genera `CALL`, no llama funciones (decisión D-v2-2) |
 | 2026-10-15 | 3 | `ConflictoExcepcion` pasa de 400 a 409; se agrega el middleware `ManejadorErrores` que traduce errores de PostgreSQL | `VERSION_2.md` §7: la integridad referencial responde 409, nunca 500 |
 | 2026-10-15 | 4, 5 | Se agrega el requisito de `.env`; los scripts de `db/` pueden traer procedimientos y disparadores | Secretos fuera del código (metodología §6); `VERSION_2.md` §4–§5 |
 | 2026-10-15 | 6 | Los comentarios pasan de «para principiantes» a «dicen el porqué» | Interpretabilidad (metodología §2.2) |
