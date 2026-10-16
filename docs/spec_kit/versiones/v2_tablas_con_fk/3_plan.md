@@ -49,7 +49,8 @@ proyecto/
 ├── db/
 │   ├── 02_alter_v2.sql                   ← NUEVO: facultad.total_programas + ampliar 2 columnas
 │   ├── 03_sp_v1.sql                      ← NUEVO: 5 sp × 7 tablas de la v1
-│   ├── 04_sp_v2.sql                      ← NUEVO: 5 sp × 15 tablas + lotes + conteos
+│   ├── 04_sp_v2.sql                      ← NUEVO: sp de las 7 entidades con llave foránea
+│   ├── 04_sp_v2_puentes_lotes.sql        ← NUEVO: 8 puentes + 7 lotes + 3 conteos
 │   ├── 05_disparadores.sql               ← NUEVO: trg_contar_programas
 │   └── 06_datos_referencia.sql           ← NUEVO: datos del Excel del profesor
 ├── docs/spec_kit/versiones/v2_tablas_con_fk/   ← este spec kit + GUIA_IA2.md

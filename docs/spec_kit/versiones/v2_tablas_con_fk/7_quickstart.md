@@ -52,7 +52,7 @@ Direcciones: API y Swagger `http://localhost:8080/swagger` · Frontend
 
 ```powershell
 $psql = "docker compose exec -T db psql -U postgres -d innovacion_curricular -t -A -c"
-Invoke-Expression "$psql `"SELECT count(*) FROM pg_proc WHERE proname LIKE 'sp_%'`""
+Invoke-Expression "$psql `"SELECT count(*) FROM pg_proc WHERE proname LIKE 'sp\_%'`""
 Invoke-Expression "$psql `"SELECT (SELECT count(*) FROM area_conocimiento), (SELECT count(*) FROM universidad), (SELECT count(*) FROM facultad), (SELECT count(*) FROM programa)`""
 Invoke-Expression "$psql `"SELECT sum(total_programas) FROM facultad`""
 ```
@@ -95,7 +95,7 @@ $prog = @{ id=99999; nombre='Programa de prueba'; tipo='Programa Académico'; ni
 | B1 | Maestro con detalle | `Probar DELETE /api/facultad/101` | `409` («tiene registros activos») |
 | Lote | Todo o nada | `POST /api/programa/10101/acreditaciones/lote` con 2 renglones y el segundo con una `resolucion` repetida | `409` y **ninguno** guardado |
 | 9 | Detalle de una universidad | `GET /api/universidad/{id}/facultades` con el id de la universidad a la que pertenece la facultad 101 | `200` y la lista incluye la facultad 101 |
-| 3 | Sin SQL en C# | `Select-String -Path api_innovacion\Repositorios\*.cs -Pattern "SELECT\|INSERT\|UPDATE\|DELETE" \| Where-Object { $_.Line -notmatch "FROM sp_" }` | **sin resultados** |
+| 3 | Sin SQL en C# | `Select-String -CaseSensitive -Path api_innovacion\Repositorios\*.cs -Pattern "SELECT\|INSERT\|UPDATE\|DELETE" \| Where-Object { $_.Line -notmatch "FROM sp_" }` | **sin resultados** |
 
 **El disparador (criterio 4)** se prueba por la API y se lee en la base, sin que
 el código envíe el total:
@@ -137,6 +137,18 @@ los tres cambios que registra `6_contracts.md`:
 | Campo que excede su longitud | usa el límite nuevo de `disciplina`: 130 (el de `programa.nombre`, 100, es de una tabla nueva y se prueba en §3) |
 | Rutas nuevas del maestro (`GET /api/universidad/{id}/facultades` y su lote) | no existen en la v1, no hay criterio que cambiar; se prueban en §3 |
 | El resto (crear → listar → editar → retirar; `activo = false` en la base) | igual |
+
+## Todo de una vez
+
+`pruebas/v2_pruebas.ps1` corre los criterios 1 al 12 (API, base e interfaz) y
+la regresión de la v1 en una sola pasada y termina con `TODO EN VERDE`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\pruebas\v2_pruebas.ps1 | Tee-Object -FilePath .\pruebas\evidencia_v2.txt
+```
+
+Revisa solo con ojos humanos lo que un script no ve: que las pantallas se
+entiendan (criterio 11) y que los mensajes de error estén en castellano claro.
 
 ## Cierre
 

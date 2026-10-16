@@ -125,7 +125,19 @@ fila sin corrección dice «sin correcciones»; no se inventan.
 
 | Fase | Prompt usado | Qué hubo que corregir | Evidencia (salida del «Verificar:») |
 |---|---|---|---|
-| 0 a 14 | pendiente | pendiente | pendiente |
+| 0 a 2 | «Haz la fase N de `8_tasks.md`» (un script por fase) | No se registró corrección | Commits `e5c076f`, `d562e09`, `32780d0`; las funciones cuentan lo esperado |
+| 3 | Fase 3: funciones de las 7 entidades | Al aplicar se comprobó que el archivo ya estaba en `db/` con extensión `.txt` (se renombró) | Total de funciones y error `23503` al crear un hijo con padre inexistente |
+| 4 | Fase 4: puentes, lotes y conteos | Los mensajes con tildes se dañaron al pasar el SQL por la tubería de PowerShell; se reaplicó copiando el archivo al contenedor y corriendo `psql -f` | 115 funciones; commit `4e890c5` |
+| 5 | Fase 5: disparador | Sin correcciones | Contador 0/0, 2/0, 1/1, 0/1 al agregar, mover y retirar; commit `26b9772` |
+| 6 | Fase 6: datos de referencia | Un `git push` falló por falta de internet y se repitió; la contraseña de la base que se había dado era otra (`.env` fija la del volumen al crearlo) | Áreas 218, universidades 6, facultades 35, programas 191, suma de `total_programas` 191; commit `c132610` |
+| 7 | Fase 7: API de la v1 sobre funciones | Un comentario `// 409` quedó antes de `}` en una línea de 6 controladores (18 errores de compilación); además la primera prueba corrió contra el binario anterior porque `dotnet watch` no había aplicado el cambio | Regresión de la v1: 200, 201, 409, 204, 404 con mensaje; commit `1784f6a` |
+| 8 | Fase 8: API de las 7 entidades | La IA olvidó la regla del espejo (D-v2-14); se corrigió en la fase 9. El 400 de la primera prueba era de PowerShell 5 (acentos sin enviar como UTF-8), no de la API | Ciclo de `programa`: 409, 200, 204, 404 y 409 con mensaje para una facultad inexistente; commit `afa225d` |
+| 9 | Fase 9: API de las 8 tablas puente | Se agregó la regla del espejo omitida (rango 0 a 1; si es 0 se guarda «No aplica», si es 1 entidad y país son obligatorios) | Puente: 201, 409, 200, 204, 404, 201; espejo: 201 con «No aplica»; commit `7e00b2e` |
+| 10 | Fase 10: maestro-detalle, lotes y regla de retiro | Llaves `{{ }}` duplicadas en el código generado de los repositorios (errores de compilación que la revisión de sintaxis no vio); se corrigió el generador y se añadió una verificación | Lote con error: 409 y ninguna fila guardada; lote bueno: 201; retiro con detalle: 409 con mensaje |
+| 11 | Fase 11: frontend de las 22 tablas | Sin correcciones de código: compiló con 0 errores | Páginas de las 22 tablas con desplegables de nombres, «(ninguna)» y mensajes de la API |
+| 12 | Fase 12: páginas de detalle con varias filas | Un conflicto de nombres entre el espacio de nombres de las páginas y los modelos se detectó antes de entregar (se calificaron los tipos); el parche de la página de Universidad se aplicó dos veces y dejó `MensajeError` duplicado (error CS0102), corregido a mano | Tres programas guardados de una vez; con una fila repetida no se guarda ninguna |
+| 13 | Fase 13: colección de pruebas y regresión | El chequeo del criterio 3 daba falsos positivos porque `Select-String` no distingue mayúsculas y tomaba `.Select(` de LINQ por SQL; se hizo sensible a mayúsculas (y se corrigió el `7_quickstart.md`) | `pruebas/evidencia_v2.txt`: 189 correctas, 0 con falla |
+| 14 | Cierre | pendiente | pendiente |
 
 ## Anotaciones para la sustentación
 

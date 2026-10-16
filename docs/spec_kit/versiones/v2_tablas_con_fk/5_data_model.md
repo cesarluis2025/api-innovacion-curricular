@@ -246,7 +246,8 @@ Solo se ofrecen registros con `activo = true`.
 | `01_alter_activo.sql` | ya existe (v1): `activo` en las 22 tablas |
 | `02_alter_v2.sql` | `facultad.total_programas`; amplía `area_conocimiento.disciplina` (a 130) y `programa.nombre` (a 100) |
 | `03_sp_v1.sql` | funciones `sp_*` de las 7 tablas de la v1 |
-| `04_sp_v2.sql` | funciones `sp_*` de las 15 tablas, lotes y conteos |
+| `04_sp_v2.sql` | funciones `sp_*` de las 7 entidades con llave foránea |
+| `04_sp_v2_puentes_lotes.sql` | funciones `sp_*` de las 8 puentes, los 7 lotes y los 3 conteos |
 | `05_disparadores.sql` | `trg_contar_programas` |
 | `06_datos_referencia.sql` | datos del Excel, en orden de dependencia |
 

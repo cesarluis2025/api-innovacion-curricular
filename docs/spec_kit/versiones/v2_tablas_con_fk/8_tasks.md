@@ -33,14 +33,14 @@ siguiente fase. Una flecha que no se cumple devuelve a su fase.
 
 | Fase | Tareas | Verificar |
 |---|---|---|
-| **0** — Secretos y entorno | `.env.example` · `.env` (no versionado) · `.gitignore` con `.env`, `bin/`, `obj/` y `frontend_innovacion/` · `docker-compose.yml` lee `${DB_PASSWORD}` y arma la cadena de conexión · nueva contraseña (rotación, D-v2-10) | `Select-String -Path docker-compose.yml -Pattern "Diseno123"` **sin resultados** · `git ls-files` solo lista `.env.example` · `docker compose down -v; docker compose up -d --build` levanta con la clave nueva |
+| **0** — Secretos y entorno | `.env.example` · `.env` (no versionado) · `.gitignore` con `.env`, `bin/`, `obj/` y `frontend_innovacion/` · `docker-compose.yml` lee `${DB_PASSWORD}` y arma la cadena de conexión · `Program.cs` sin cadena de conexión por defecto (falla con mensaje claro si falta `CONNECTION_STRING`) · nueva contraseña (rotación, D-v2-10) | `Select-String -Path docker-compose.yml, api_innovacion\Program.cs -Pattern "Diseno123"` **sin resultados** · `git ls-files` solo lista `.env.example` · `docker compose down -v; docker compose up -d --build` levanta con la clave nueva |
 | **1** — Columnas nuevas | `db/02_alter_v2.sql`: `facultad.total_programas`, `disciplina` a `VARCHAR(130)`, `programa.nombre` a `VARCHAR(100)` | `\d facultad` muestra `total_programas` · `\d area_conocimiento` muestra `character varying(130)` · `\d programa` muestra `(100)` |
-| **2** — Funciones de la v1 | `db/03_sp_v1.sql`: los 5 `sp_*` de las 7 tablas | `SELECT count(*) FROM pg_proc WHERE proname LIKE 'sp_%'` = **35** · `SELECT * FROM sp_listar_universidad()` devuelve filas con `activo` |
-| **3** — Funciones de las 7 entidades | `db/04_sp_v2.sql` (primera parte): `facultad`, `programa`, `acreditacion`, `registro_calificado`, `activ_academica`, `pasantia`, `premio`, con `RETURNING *`, `JOIN` del nombre del padre y comprobación de **padre activo** (D-v2-13) | total = **70** · `SELECT * FROM sp_crear_programa(...)` con `facultad = 9999` lanza `23503` en `psql` |
-| **4** — Puentes, lotes y conteos | `db/04_sp_v2.sql` (segunda parte): 8 tablas puente (los 4 verbos o los 5), `sp_crear_<detalle>_lote` ×7 con `jsonb_to_recordset`, `sp_contar_detalle_*` ×3, reactivación de parejas (D-v2-7) | total = **115** · asignar, repetir y retirar una pareja en `psql`: la repetida da `23505`, la retirada se reactiva |
+| **2** — Funciones de la v1 | `db/03_sp_v1.sql`: los 5 `sp_*` de las 7 tablas | `SELECT count(*) FROM pg_proc WHERE proname LIKE 'sp\_%'` = **35** · `SELECT * FROM sp_listar_universidad()` devuelve filas con `activo` |
+| **3** — Funciones de las 7 entidades | `db/04_sp_v2.sql` (7 entidades): `facultad`, `programa`, `acreditacion`, `registro_calificado`, `activ_academica`, `pasantia`, `premio`, con `RETURNING *`, `JOIN` del nombre del padre y comprobación de **padre activo** (D-v2-13) | total = **70** · `SELECT * FROM sp_crear_programa(...)` con `facultad = 9999` lanza `23503` en `psql` |
+| **4** — Puentes, lotes y conteos | `db/04_sp_v2_puentes_lotes.sql`: 8 tablas puente (los 4 verbos o los 5), `sp_crear_<detalle>_lote` ×7 con `jsonb_to_recordset`, `sp_contar_detalle_*` ×3, reactivación de parejas (D-v2-7) | total = **115** · asignar, repetir y retirar una pareja en `psql`: la repetida da `23505`, la retirada se reactiva |
 | **5** — Disparador | `db/05_disparadores.sql`: `fn_contar_programas` + `trg_contar_programas` (INSERT, UPDATE y DELETE; recalcula `OLD` y `NEW`) | en `psql`: insertar un programa sube el contador · `UPDATE ... SET activo = false` lo baja · mover un programa a otra facultad corrige **las dos** |
 | **6** — Datos de referencia | `db/06_datos_referencia.sql` generado de `Base de Datos v6.xlsx` con las reglas de D-v2-12 (ids 1–218, relleno documentado, «Ciencias») | `218 · 6 · 35 · 191` · `SELECT sum(total_programas) FROM facultad` = **191** |
-| **7** — API: errores y v1 migrada | `Middleware/ManejadorErrores.cs` · `ConflictoExcepcion` a 409 · los 7 repositorios de la v1 pasan a `SELECT * FROM sp_xxx(...)` · límites nuevos en `disciplina` y `programa.nombre` | regresión de la v1 (`7_quickstart.md` §5) en verde · la búsqueda de `SELECT/INSERT/UPDATE/DELETE` que no sean `FROM sp_` sin resultados |
+| **7** — API: errores y v1 migrada | `Middleware/ManejadorErrores.cs` · `ConflictoExcepcion` a 409 · los 7 repositorios de la v1 pasan a `SELECT * FROM sp_xxx(...)` (con `DefaultTypeMap.MatchNamesWithUnderscores = true` en `Program.cs`, para que `razon_social` llegue a `RazonSocial` sin alias a mano) · límites nuevos en `disciplina` y `programa.nombre` | regresión de la v1 (`7_quickstart.md` §5) en verde · la búsqueda de `SELECT/INSERT/UPDATE/DELETE` que no sean `FROM sp_` sin resultados |
 | **8** — API: 7 entidades | por entidad: Modelo · Peticiones · Repositorio (interfaz + clase) · Servicio · Controller · registro en `Program.cs` | `dotnet build` sin errores · ciclo crear → listar → editar → retirar de cada una · `POST` con padre inexistente = **409** |
 | **9** — API: 8 puentes | las mismas capas, con llave compuesta en la ruta; sin `PUT` en los 5 de solo llaves | asignar `201` · repetir **409** · retirar `204` · asignar de nuevo `201` (reactiva) |
 | **10** — API: maestro-detalle y lote | rutas `GET …/{id}/{detalle}` y `POST …/lote` de `universidad`, `facultad` y `programa` · regla B1 en el servicio (`TieneDetalleActivoAsync`) | lote con un renglón repetido = **409 y ninguno guardado** · `DELETE /api/facultad/101` con programas activos = **409** |
@@ -77,4 +77,20 @@ bloque (qué hace, por qué así, qué pasa si falla y qué cambiaría).
 
 ## Estado
 
-Fases 0 a 14: pendientes. Se actualiza esta tabla al cerrar cada una.
+| Fase | Estado | Commit (rama `cesar-dev`) |
+|---|---|---|
+| 0 Secretos y entorno | Verde | `e5c076f` |
+| 1 Columnas nuevas | Verde | `d562e09` |
+| 2 Funciones de la v1 | Verde | `32780d0` |
+| 3 Funciones de las 7 entidades | Verde | en el historial de `cesar-dev` |
+| 4 Puentes, lotes y conteos | Verde | `4e890c5` |
+| 5 Disparador | Verde | `26b9772` |
+| 6 Datos de referencia | Verde | `c132610` |
+| 7 API: errores y v1 migrada | Verde | `1784f6a` |
+| 8 API: 7 entidades | Verde | `afa225d` |
+| 9 API: 8 puentes | Verde | `7e00b2e` |
+| 10 API: maestro-detalle y lote | Verde | en el historial de `cesar-dev` |
+| 11 Frontend: pantallas y desplegables | Verde | repo `frontend_innovacion`, rama `cesar-dev` |
+| 12 Frontend: maestro-detalle | Verde | repo `frontend_innovacion`, rama `cesar-dev` |
+| 13 Colección de pruebas y regresión | Verde: `pruebas/v2_pruebas.ps1`, 189 comprobaciones, 0 fallas (`pruebas/evidencia_v2.txt`) | rama `cesar-dev` |
+| 14 Cierre | En curso: pull requests, merge del encargado del main y tag `v2` en los dos repositorios | pendiente |
