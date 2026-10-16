@@ -30,7 +30,7 @@ public class AspectoNormativoController : ControllerBase
             var entidad = await _servicio.CrearAsync(peticion);
             return CreatedAtAction(nameof(ObtenerPorId), new { id = entidad.Id }, entidad);
         }
-        catch (ConflictoExcepcion ex) { return BadRequest(new { mensaje = ex.Message }); }
+        catch (ConflictoExcepcion ex) { return Conflict(new { mensaje = ex.Message }); }
     }
 
     [HttpPut("{id}")]

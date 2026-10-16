@@ -53,7 +53,7 @@ public class AreaConocimientoController : ControllerBase
         }
         catch (ConflictoExcepcion ex)
         {
-            return BadRequest(new { mensaje = ex.Message }); // 400
+            return Conflict(new { mensaje = ex.Message }); // 409
         }
     }
 

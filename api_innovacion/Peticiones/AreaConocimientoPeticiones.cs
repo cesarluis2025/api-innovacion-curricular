@@ -20,7 +20,8 @@ public class CrearAreaConocimientoPeticion
     public string Area { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "disciplina es obligatorio")]
-    [MaxLength(60)]
+    // 130 y no 60: 19 disciplinas del Excel del profesor miden hasta 124 caracteres.
+    [MaxLength(130)]
     public string Disciplina { get; set; } = string.Empty;
 }
 
@@ -37,6 +38,7 @@ public class ActualizarAreaConocimientoPeticion
     public string Area { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "disciplina es obligatorio")]
-    [MaxLength(60)]
+    // 130 y no 60: 19 disciplinas del Excel del profesor miden hasta 124 caracteres.
+    [MaxLength(130)]
     public string Disciplina { get; set; } = string.Empty;
 }

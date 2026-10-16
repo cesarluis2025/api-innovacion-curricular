@@ -8,75 +8,62 @@ namespace ApiInnovacionCurricular.Repositorios;
 public class AreaConocimientoRepositorio : IAreaConocimientoRepositorio
 {
     private readonly string _cadenaConexion;
+    public AreaConocimientoRepositorio(string cadenaConexion) => _cadenaConexion = cadenaConexion;
 
-    // ASP.NET Core inyecta aquí la cadena de conexión que registramos
-    // en Program.cs con builder.Services.AddSingleton(...).
-    public AreaConocimientoRepositorio(string cadenaConexion)
-    {
-        _cadenaConexion = cadenaConexion;
-    }
-
-    // Cada método abre su propia conexión y la cierra sola (el "using").
-    // Con Dapper no se mantiene una conexión abierta compartida.
+    // Cada método abre su conexión y la cierra sola (el "using").
     private IDbConnection Conexion => new NpgsqlConnection(_cadenaConexion);
+
+    // Desde la v2 el repositorio NO escribe SQL de tablas: solo llama a las
+    // funciones sp_ de db/03_sp_v1.sql. Así la regla (filtrar activos, no
+    // borrar de verdad) vive en un único lugar, la base. Las columnas llegan
+    // en snake_case y Dapper las une a las propiedades gracias a
+    // MatchNamesWithUnderscores (Program.cs).
 
     public async Task<IEnumerable<AreaConocimiento>> ListarAsync()
     {
-        const string sql = @"
-            SELECT id AS ""Id"", gran_area AS ""GranArea"", area AS ""Area"",
-                   disciplina AS ""Disciplina"", activo AS ""Activo""
-            FROM area_conocimiento
-            WHERE activo = true
-            ORDER BY id";
         using var conexion = Conexion;
-        return await conexion.QueryAsync<AreaConocimiento>(sql);
+        return await conexion.QueryAsync<AreaConocimiento>("SELECT * FROM sp_listar_area_conocimiento()");
     }
 
     public async Task<AreaConocimiento?> ObtenerPorIdAsync(int id)
     {
-        const string sql = @"
-            SELECT id AS ""Id"", gran_area AS ""GranArea"", area AS ""Area"",
-                   disciplina AS ""Disciplina"", activo AS ""Activo""
-            FROM area_conocimiento
-            WHERE id = @Id AND activo = true";
         using var conexion = Conexion;
-        return await conexion.QueryFirstOrDefaultAsync<AreaConocimiento>(sql, new { Id = id });
+        return await conexion.QueryFirstOrDefaultAsync<AreaConocimiento>(
+            "SELECT * FROM sp_consultar_area_conocimiento(@Id)", new { Id = id });
     }
 
+    // Solo ve registros ACTIVOS. Si el id existe pero está retirado, el
+    // servicio no lo detecta aquí y el INSERT falla con 23505, que el
+    // manejador de errores convierte en 409 (nunca se reutiliza una llave).
     public async Task<bool> ExisteIdAsync(int id)
     {
-        const string sql = "SELECT COUNT(1) FROM area_conocimiento WHERE id = @Id";
         using var conexion = Conexion;
-        var cantidad = await conexion.ExecuteScalarAsync<int>(sql, new { Id = id });
-        return cantidad > 0;
+        var fila = await conexion.QueryFirstOrDefaultAsync<AreaConocimiento>(
+            "SELECT * FROM sp_consultar_area_conocimiento(@Id)", new { Id = id });
+        return fila is not null;
     }
 
-    public async Task CrearAsync(AreaConocimiento area)
+    // La función devuelve la fila insertada; aquí no se necesita, el servicio
+    // ya conoce los valores.
+    public async Task CrearAsync(AreaConocimiento entidad)
     {
-        const string sql = @"
-            INSERT INTO area_conocimiento (id, gran_area, area, disciplina, activo)
-            VALUES (@Id, @GranArea, @Area, @Disciplina, true)";
         using var conexion = Conexion;
-        await conexion.ExecuteAsync(sql, area);
+        await conexion.ExecuteAsync("SELECT * FROM sp_crear_area_conocimiento(@Id, @GranArea, @Area, @Disciplina)", entidad);
     }
 
-    public async Task<bool> ActualizarAsync(AreaConocimiento area)
+    // La función de actualizar devuelve CERO filas si el id no existe o está
+    // retirado; eso es lo que el servicio traduce a 404.
+    public async Task<bool> ActualizarAsync(AreaConocimiento entidad)
     {
-        const string sql = @"
-            UPDATE area_conocimiento
-            SET gran_area = @GranArea, area = @Area, disciplina = @Disciplina
-            WHERE id = @Id AND activo = true";
         using var conexion = Conexion;
-        var filasAfectadas = await conexion.ExecuteAsync(sql, area);
-        return filasAfectadas > 0;
+        var filas = await conexion.QueryAsync<AreaConocimiento>("SELECT * FROM sp_actualizar_area_conocimiento(@Id, @GranArea, @Area, @Disciplina)", entidad);
+        return filas.Any();
     }
 
     public async Task<bool> EliminarLogicoAsync(int id)
     {
-        // Esto es el borrado lógico: nunca DELETE, siempre marcar inactivo.
-        const string sql = "UPDATE area_conocimiento SET activo = false WHERE id = @Id AND activo = true";
         using var conexion = Conexion;
-        var filasAfectadas = await conexion.ExecuteAsync(sql, new { Id = id });
-        return filasAfectadas > 0;
+        return await conexion.ExecuteScalarAsync<bool>(
+            "SELECT * FROM sp_eliminar_area_conocimiento(@Id)", new { Id = id });
     }
 }

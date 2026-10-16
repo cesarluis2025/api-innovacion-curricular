@@ -31,7 +31,7 @@ public class AliadoController : ControllerBase
             var aliado = await _servicio.CrearAsync(peticion);
             return CreatedAtAction(nameof(ObtenerPorNit), new { nit = aliado.Nit }, aliado);
         }
-        catch (ConflictoExcepcion ex) { return BadRequest(new { mensaje = ex.Message }); }
+        catch (ConflictoExcepcion ex) { return Conflict(new { mensaje = ex.Message }); }
     }
 
     [HttpPut("{nit}")]

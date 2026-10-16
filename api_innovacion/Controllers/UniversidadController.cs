@@ -30,7 +30,7 @@ public class UniversidadController : ControllerBase
             var universidad = await _servicio.CrearAsync(peticion);
             return CreatedAtAction(nameof(ObtenerPorId), new { id = universidad.Id }, universidad);
         }
-        catch (ConflictoExcepcion ex) { return BadRequest(new { mensaje = ex.Message }); }
+        catch (ConflictoExcepcion ex) { return Conflict(new { mensaje = ex.Message }); }
     }
 
     [HttpPut("{id}")]

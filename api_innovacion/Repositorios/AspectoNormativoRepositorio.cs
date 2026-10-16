@@ -19,53 +19,61 @@ public class AspectoNormativoRepositorio : IAspectoNormativoRepositorio
 {
     private readonly string _cadenaConexion;
     public AspectoNormativoRepositorio(string cadenaConexion) => _cadenaConexion = cadenaConexion;
+
+    // Cada método abre su conexión y la cierra sola (el "using").
     private IDbConnection Conexion => new NpgsqlConnection(_cadenaConexion);
+
+    // Desde la v2 el repositorio NO escribe SQL de tablas: solo llama a las
+    // funciones sp_ de db/03_sp_v1.sql. Así la regla (filtrar activos, no
+    // borrar de verdad) vive en un único lugar, la base. Las columnas llegan
+    // en snake_case y Dapper las une a las propiedades gracias a
+    // MatchNamesWithUnderscores (Program.cs).
 
     public async Task<IEnumerable<AspectoNormativo>> ListarAsync()
     {
-        const string sql = @"SELECT id AS ""Id"", tipo AS ""Tipo"", descripcion AS ""Descripcion"",
-                              fuente AS ""Fuente"", activo AS ""Activo""
-                              FROM aspecto_normativo WHERE activo = true ORDER BY id";
         using var conexion = Conexion;
-        return await conexion.QueryAsync<AspectoNormativo>(sql);
+        return await conexion.QueryAsync<AspectoNormativo>("SELECT * FROM sp_listar_aspecto_normativo()");
     }
 
     public async Task<AspectoNormativo?> ObtenerPorIdAsync(int id)
     {
-        const string sql = @"SELECT id AS ""Id"", tipo AS ""Tipo"", descripcion AS ""Descripcion"",
-                              fuente AS ""Fuente"", activo AS ""Activo""
-                              FROM aspecto_normativo WHERE id = @Id AND activo = true";
         using var conexion = Conexion;
-        return await conexion.QueryFirstOrDefaultAsync<AspectoNormativo>(sql, new { Id = id });
+        return await conexion.QueryFirstOrDefaultAsync<AspectoNormativo>(
+            "SELECT * FROM sp_consultar_aspecto_normativo(@Id)", new { Id = id });
     }
 
+    // Solo ve registros ACTIVOS. Si el id existe pero está retirado, el
+    // servicio no lo detecta aquí y el INSERT falla con 23505, que el
+    // manejador de errores convierte en 409 (nunca se reutiliza una llave).
     public async Task<bool> ExisteIdAsync(int id)
     {
-        const string sql = "SELECT COUNT(1) FROM aspecto_normativo WHERE id = @Id";
         using var conexion = Conexion;
-        return await conexion.ExecuteScalarAsync<int>(sql, new { Id = id }) > 0;
+        var fila = await conexion.QueryFirstOrDefaultAsync<AspectoNormativo>(
+            "SELECT * FROM sp_consultar_aspecto_normativo(@Id)", new { Id = id });
+        return fila is not null;
     }
 
+    // La función devuelve la fila insertada; aquí no se necesita, el servicio
+    // ya conoce los valores.
     public async Task CrearAsync(AspectoNormativo entidad)
     {
-        const string sql = @"INSERT INTO aspecto_normativo (id, tipo, descripcion, fuente, activo)
-                              VALUES (@Id, @Tipo, @Descripcion, @Fuente, true)";
         using var conexion = Conexion;
-        await conexion.ExecuteAsync(sql, entidad);
+        await conexion.ExecuteAsync("SELECT * FROM sp_crear_aspecto_normativo(@Id, @Tipo, @Descripcion, @Fuente)", entidad);
     }
 
+    // La función de actualizar devuelve CERO filas si el id no existe o está
+    // retirado; eso es lo que el servicio traduce a 404.
     public async Task<bool> ActualizarAsync(AspectoNormativo entidad)
     {
-        const string sql = @"UPDATE aspecto_normativo SET tipo = @Tipo, descripcion = @Descripcion, fuente = @Fuente
-                              WHERE id = @Id AND activo = true";
         using var conexion = Conexion;
-        return await conexion.ExecuteAsync(sql, entidad) > 0;
+        var filas = await conexion.QueryAsync<AspectoNormativo>("SELECT * FROM sp_actualizar_aspecto_normativo(@Id, @Tipo, @Descripcion, @Fuente)", entidad);
+        return filas.Any();
     }
 
     public async Task<bool> EliminarLogicoAsync(int id)
     {
-        const string sql = "UPDATE aspecto_normativo SET activo = false WHERE id = @Id AND activo = true";
         using var conexion = Conexion;
-        return await conexion.ExecuteAsync(sql, new { Id = id }) > 0;
+        return await conexion.ExecuteScalarAsync<bool>(
+            "SELECT * FROM sp_eliminar_aspecto_normativo(@Id)", new { Id = id });
     }
 }
