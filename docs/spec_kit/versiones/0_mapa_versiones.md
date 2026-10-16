@@ -21,7 +21,7 @@
 | Versión | Qué agrega (acumulativo) | Estado |
 |---|---|---|
 | **v1** | CRUD completo de **las 7 tablas sin clave foránea** — **API e interfaces gráficas** | **Cerrada**, tag `v1` ([spec](v1_catalogos_postgres/2_spec.md)) |
-| **v2** | CRUD de **las 15 tablas con clave foránea** — con la v2 están las **22 tablas propias del módulo**: las FK como **listas desplegables cargadas desde la API**, las tablas puente, el maestro-detalle, **todo el CRUD por procedimientos almacenados** y al menos un disparador — **API e interfaces gráficas** | **En curso** ([spec](v2_tablas_con_fk/2_spec.md)) |
+| **v2** | CRUD de **las 15 tablas con clave foránea** — con la v2 están las **22 tablas propias del módulo**: las FK como **listas desplegables cargadas desde la API**, las tablas puente, el maestro-detalle, **todo el CRUD por procedimientos almacenados** y al menos un disparador — **API e interfaces gráficas** | **Construida y verificada** (189 comprobaciones en verde); falta el merge del encargado del main y el tag `v2` ([spec](v2_tablas_con_fk/2_spec.md)) |
 | v3 | **El control de acceso**: JWT, sesión, permisos por rol, y el CRUD de `usuario`, `rol` y `rol_usuario` (solo administrador) | Pendiente |
 | v4 | **10 consultas multitabla** (4+ tablas cada una), tablero con gráficos, **imagen corporativa con su manual de marca**, páginas corporativas, responsive/PWA y **publicación** en un servidor | Pendiente |
 
