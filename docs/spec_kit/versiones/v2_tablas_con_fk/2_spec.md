@@ -45,6 +45,7 @@ traduce los errores de la base a códigos HTTP.
 | Maestro-detalle | En la interfaz, al abrir el maestro se ve su detalle ahí mismo y se le agregan renglones sin salir; varios renglones viajan en **un solo envío** (transacción) |
 | Desplegables | Toda FK se elige de un `<select>` cargado desde la API (muestra nombre, manda llave); FK opcional con «(ninguna)» → `null` |
 | Integridad | FK inexistente, pareja repetida → **409** en castellano; nunca 500 |
+| Datos de referencia | Script `db/06_datos_referencia.sql` con las áreas, universidades, facultades y programas del Excel del profesor, y la ampliación de `area_conocimiento.disciplina` y `programa.nombre` para que quepan (D-v2-12) |
 | Regresión v1 | Los criterios de la v1 se corren completos el día de la entrega |
 | Entregables | Script de BD con procedimientos y disparador, colección de pruebas (incluye las que deben fallar), prompts con las correcciones, guía de IA de la versión, tag `v2` |
 
@@ -68,7 +69,7 @@ traduce los errores de la base a códigos HTTP.
 
 | # | Requisito |
 |---|---|
-| RF1 | Los 5 verbos de las 22 tablas pasan por `sp_*`; el repositorio solo **llama** al procedimiento con parámetros. Ningún SQL en C#. |
+| RF1 | Los 5 verbos de las 22 tablas pasan por `sp_*`; el repositorio solo **llama** al procedimiento con parámetros. La única sentencia permitida en C# es la llamada `SELECT * FROM sp_xxx(...)`; ningún `SELECT`/`INSERT`/`UPDATE`/`DELETE` sobre tablas. |
 | RF2 | Tablas con `activo`: `sp_eliminar_*` hace `UPDATE … SET activo = false` (la columna es booleana en el esquema dado) y todo listado filtra inactivos. |
 | RF3 | `sp_crear_*` y `sp_actualizar_*` devuelven la fila como quedó guardada (valores por defecto y cálculos del disparador incluidos). |
 | RF4 | Crear un hijo cuyo padre no existe (o está inactivo) → **409** con mensaje que nombra el campo. |
@@ -89,7 +90,7 @@ traduce los errores de la base a códigos HTTP.
 |---|---|---|
 | 1 | Tablas de la v1: CRUD + interfaz | Se abre cada una: crear, editar, retirar |
 | 2 | Tablas de la v2: CRUD + interfaz | Las 15, una por una |
-| 3 | Los 5 verbos pasan por procedimientos | `grep` en los repositorios: ningún `SELECT/INSERT/UPDATE/DELETE` |
+| 3 | Los 5 verbos pasan por procedimientos | `grep` en los repositorios: ninguna línea con `SELECT`/`INSERT`/`UPDATE`/`DELETE` que no sea una llamada `FROM sp_` |
 | 4 | Disparador funciona | Se agrega/retira un detalle por la interfaz y cambia el contador solo |
 | 5 | Cada FK es un desplegable de la API | Lleno, con nombres (p. ej. facultad → nombre de universidad) |
 | 6 | FK opcional acepta «(ninguna)» | Crear `activ_academica` sin `disenio` |
@@ -113,12 +114,13 @@ traduce los errores de la base a códigos HTTP.
 | B4 | Metodología §7 lista `PATCH` por tabla y los códigos 400/422; la v1 solo hizo `PUT` y 400 (Art. 7 y 8) | Documentar que `PATCH` no se implementa (YAGNI) salvo que el profesor lo exija; validación del body se queda en 400 | **Resuelta:** sin `PATCH`; validación del body sigue en 400 (a confirmar con el profesor si lo exige) |
 | B5 | VERSION_2.md §12 habla de un sobre `{tabla, limite, total, datos}`; la v1 devuelve arreglo plano | Mantener arreglo plano (es nuestra API) | **Resuelta:** arreglo plano, sin sobre |
 | B6 | Fila puente inactiva al repetir la pareja: ¿409 o reactivar? | Reactivarla | **Resuelta:** se reactiva la fila puente inactiva |
-| B7 | Datos de referencia del Excel (218 áreas, 6 universidades, 35 facultades, 191 programas) | Script `db/0N_datos_referencia.sql` | **Resuelta:** script `db/0N_datos_referencia.sql` |
+| B7 | Datos de referencia del Excel (218 áreas, 6 universidades, 35 facultades, 191 programas) | Script `db/0N_datos_referencia.sql` | **Resuelta:** script `db/06_datos_referencia.sql` desde `Base de Datos v6.xlsx`; ampliar dos columnas y rellenar con valores documentados las obligatorias que el Excel no trae (D-v2-12) |
 
 ## Historial de cambios
 
 | Versión | Fecha | Cambio |
 |---|---|---|
+| 2.3 | 2026-10-16 | B7 detallada: origen de los datos, ampliación de dos columnas y valores de relleno (D-v2-12) |
 | 2.2 | 2026-10-15 | Compuerta 1 cerrada: B1–B7 resueltas, sin `[NECESITA ACLARACIÓN]` pendientes |
 | 2.1 | 2026-10-15 | Se agregan diagrama de contexto, compuerta 1 (clarificaciones), secretos (RF13) y comentarios (RF14) según 0_METODOLOGIA.md |
 | 2.0 | 2026-10-15 | Spec de la v2 reescrita a partir de `VERSION_2.md` (borrador anterior descartado: asumía validar FK con 400, ignoraba procedimientos y disparador) |

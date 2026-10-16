@@ -47,7 +47,7 @@ proyecto/
 ├── .gitignore                            ← CAMBIA: agrega .env
 ├── docker-compose.yml                    ← CAMBIA: lee ${DB_PASSWORD}, sin secretos
 ├── db/
-│   ├── 02_alter_v2.sql                   ← NUEVO: facultad.total_programas
+│   ├── 02_alter_v2.sql                   ← NUEVO: facultad.total_programas + ampliar 2 columnas
 │   ├── 03_sp_v1.sql                      ← NUEVO: 5 sp × 7 tablas de la v1
 │   ├── 04_sp_v2.sql                      ← NUEVO: 5 sp × 15 tablas + lotes + conteos
 │   ├── 05_disparadores.sql               ← NUEVO: trg_contar_programas
@@ -71,7 +71,7 @@ proyecto/
 |---|---|
 | Controller | Igual: traduce excepciones a HTTP. Se agregan rutas de **lote** para los maestros (`POST /api/programa/{id}/acreditaciones/lote`, etc.; el contrato exacto va en `6_contracts.md`). Las tablas puente usan la llave compuesta en la ruta. |
 | Servicio | Aplica la regla B1: antes de retirar un maestro pregunta al repositorio si tiene detalle activo y lanza `ConflictoExcepcion` (409). |
-| Repositorio | **Sin SQL.** Cada método llama a un `sp_*` con `commandType: CommandType.StoredProcedure` y parámetros. |
+| Repositorio | **Sin SQL sobre tablas.** Cada método ejecuta una sola sentencia: la llamada `SELECT * FROM sp_xxx(@p1, @p2)`, como texto y con parámetros (decisión D-v2-2: `CommandType.StoredProcedure` genera `CALL` desde Npgsql 7 y nuestros `sp_*` son funciones). |
 | Base de datos | Funciones `sp_listar_`, `sp_consultar_`, `sp_crear_`, `sp_actualizar_`, `sp_eliminar_` + `<tabla>`; listados con `WHERE activo`; `RETURNING *`; el disparador. |
 | Middleware | `ManejadorErrores` atrapa `PostgresException`: `23503` (FK) y `23505` (PK repetida) → **409** en castellano con el campo y el valor; cualquier otra → 500. |
 
