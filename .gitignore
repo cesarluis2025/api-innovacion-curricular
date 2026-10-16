@@ -4,3 +4,7 @@ obj/
 
 ## Archivos de usuario de Visual Studio (si alguien lo usa además de VS Code)
 *.user
+
+.env
+
+frontend_innovacion/

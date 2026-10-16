@@ -8,11 +8,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// --- Cadena de conexión: viene de la variable de entorno CONNECTION_STRING
-//     (definida en docker-compose.yml). Si no existe, usa localhost para
-//     cuando corres la API fuera de Docker. ---
+// --- Cadena de conexión: viene SOLO de la variable de entorno CONNECTION_STRING
+//     (docker-compose.yml la arma con el .env). No hay valor por defecto a
+//     propósito: uno con la clave escrita aquí la dejaría en el repositorio.
+//     Para correr fuera de Docker, define la variable en tu terminal. ---
 var cadenaConexion = Environment.GetEnvironmentVariable("CONNECTION_STRING")
-    ?? "Host=localhost;Port=15432;Database=innovacion_curricular;Username=postgres;Password=Diseno123!";
+    ?? throw new InvalidOperationException("Falta la variable de entorno CONNECTION_STRING. Copia .env.example a .env y arranca con 'docker compose up -d'.");
 
 // --- Inyección de dependencias: cada tabla registra su repositorio y su
 //     servicio. Cuando agreguemos las otras 6 tablas de esta entrega,
@@ -46,3 +47,5 @@ app.MapControllers();
 app.MapGet("/", () => Results.Ok(new { estado = "API de innovación curricular activa" }));
 
 app.Run();
+
+

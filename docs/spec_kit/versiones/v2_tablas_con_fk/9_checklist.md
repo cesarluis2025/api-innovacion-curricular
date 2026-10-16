@@ -86,8 +86,9 @@ que responde por la revisión.
 
 | Persona | Documentos revisados | Fecha | Firma |
 |---|---|---|---|
-| | | | |
-| | | | |
+| Cesar Luis Mosquera García | 2_spec a 8_tasks | 2026-10-16 | C.L.M.G. |
+| Carlos Adrian Renteria Machado | 2_spec a 8_tasks | 2026-10-16 | C.A.R.M |
+
 
 Con las dos firmas y todas las casillas marcadas, la compuerta 3 queda cerrada y
 empieza la fase 0 de `8_tasks.md`.
