@@ -1,4 +1,5 @@
 using System.Data;
+using System.Text.Json;
 using Dapper;
 using Npgsql;
 using ApiInnovacionCurricular.Modelos;
@@ -13,6 +14,7 @@ public interface IPasantiaRepositorio
     Task<Pasantia> CrearAsync(Pasantia entidad);
     Task<Pasantia?> ActualizarAsync(Pasantia entidad);
     Task<bool> EliminarLogicoAsync(int id);
+    Task<IEnumerable<Pasantia>> CrearLoteAsync(int maestro, IEnumerable<Pasantia> renglones);
 }
 
 // Solo llama a las funciones sp_ de db/04_sp_v2.sql: la API no escribe SQL de
@@ -68,5 +70,24 @@ public class PasantiaRepositorio : IPasantiaRepositorio
         using var conexion = Conexion;
         return await conexion.ExecuteScalarAsync<bool>(
             "SELECT * FROM sp_eliminar_pasantia(@Id)", new { Id = id });
+    }
+
+    // Varios renglones en UNA llamada = UNA transacción (D-v2-5): la función
+    // guarda todos o ninguno. El JSON usa los nombres de las COLUMNAS (snake_case)
+    // porque así los lee jsonb_to_recordset dentro de la función; se arma a mano
+    // y no con una política de nombres para que no dependa de cómo se parta «HAcom».
+    public async Task<IEnumerable<Pasantia>> CrearLoteAsync(int maestro, IEnumerable<Pasantia> renglones)
+    {
+        var json = JsonSerializer.Serialize(renglones.Select(r => new Dictionary<string, object?>
+        {
+            ["id"] = r.Id,
+            ["nombre"] = r.Nombre,
+            ["pais"] = r.Pais,
+            ["empresa"] = r.Empresa,
+            ["descripcion"] = r.Descripcion
+        }));
+        using var conexion = Conexion;
+        return await conexion.QueryAsync<Pasantia>(
+            "SELECT * FROM sp_crear_pasantia_lote(@Maestro, @Renglones::jsonb)", new { Maestro = maestro, Renglones = json });
     }
 }

@@ -1,4 +1,5 @@
 using System.Data;
+using System.Text.Json;
 using Dapper;
 using Npgsql;
 using ApiInnovacionCurricular.Modelos;
@@ -13,6 +14,8 @@ public interface IProgramaRepositorio
     Task<Programa> CrearAsync(Programa entidad);
     Task<Programa?> ActualizarAsync(Programa entidad);
     Task<bool> EliminarLogicoAsync(int id);
+    Task<IEnumerable<Programa>> CrearLoteAsync(int maestro, IEnumerable<Programa> renglones);
+    Task<bool> TieneDetalleActivoAsync(int id);
 }
 
 // Solo llama a las funciones sp_ de db/04_sp_v2.sql: la API no escribe SQL de
@@ -68,5 +71,38 @@ public class ProgramaRepositorio : IProgramaRepositorio
         using var conexion = Conexion;
         return await conexion.ExecuteScalarAsync<bool>(
             "SELECT * FROM sp_eliminar_programa(@Id)", new { Id = id });
+    }
+
+    // Varios renglones en UNA llamada = UNA transacción (D-v2-5): la función
+    // guarda todos o ninguno. El JSON usa los nombres de las COLUMNAS (snake_case)
+    // porque así los lee jsonb_to_recordset dentro de la función; se arma a mano
+    // y no con una política de nombres para que no dependa de cómo se parta «HAcom».
+    public async Task<IEnumerable<Programa>> CrearLoteAsync(int maestro, IEnumerable<Programa> renglones)
+    {
+        var json = JsonSerializer.Serialize(renglones.Select(r => new Dictionary<string, object?>
+        {
+            ["id"] = r.Id,
+            ["nombre"] = r.Nombre,
+            ["tipo"] = r.Tipo,
+            ["nivel"] = r.Nivel,
+            ["fecha_creacion"] = r.FechaCreacion,
+            ["fecha_cierre"] = r.FechaCierre,
+            ["numero_cohortes"] = r.NumeroCohortes,
+            ["cant_graduados"] = r.CantGraduados,
+            ["fecha_actualizacion"] = r.FechaActualizacion,
+            ["ciudad"] = r.Ciudad
+        }));
+        using var conexion = Conexion;
+        return await conexion.QueryAsync<Programa>(
+            "SELECT * FROM sp_crear_programa_lote(@Maestro, @Renglones::jsonb)", new { Maestro = maestro, Renglones = json });
+    }
+
+    // Pregunta a sp_contar_detalle_programa: la regla de retiro (B1) vive en el servicio y
+    // aquí solo está la consulta (D-v2-4).
+    public async Task<bool> TieneDetalleActivoAsync(int id)
+    {
+        using var conexion = Conexion;
+        return await conexion.ExecuteScalarAsync<int>(
+            "SELECT * FROM sp_contar_detalle_programa(@Id)", new { Id = id }) > 0;
     }
 }

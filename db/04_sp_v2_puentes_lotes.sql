@@ -860,7 +860,7 @@ BEGIN
             VALUES (r.id, r.nombre, r.tipo, r.fecha_fun, p_maestro, TRUE)
             RETURNING * INTO v_fila;
         EXCEPTION WHEN unique_violation THEN
-            RAISE EXCEPTION 'renglón %: ya existe un registro con esa llave', v_n
+            RAISE EXCEPTION 'renglón %: ya existe una facultad con esa llave', v_n
                 USING ERRCODE = '23505', TABLE = 'facultad', CONSTRAINT = 'facultad_pkey';
         END;
         RETURN NEXT v_fila;
@@ -890,7 +890,7 @@ BEGIN
             VALUES (r.id, r.nombre, r.tipo, r.nivel, r.fecha_creacion, r.fecha_cierre, r.numero_cohortes, r.cant_graduados, r.fecha_actualizacion, r.ciudad, p_maestro, TRUE)
             RETURNING * INTO v_fila;
         EXCEPTION WHEN unique_violation THEN
-            RAISE EXCEPTION 'renglón %: ya existe un registro con esa llave', v_n
+            RAISE EXCEPTION 'renglón %: ya existe un programa con esa llave', v_n
                 USING ERRCODE = '23505', TABLE = 'programa', CONSTRAINT = 'programa_pkey';
         END;
         RETURN NEXT v_fila;
@@ -920,7 +920,7 @@ BEGIN
             VALUES (r.resolucion, r.tipo, r.calificacion, r.fecha_inicio, r.fecha_fin, p_maestro, TRUE)
             RETURNING * INTO v_fila;
         EXCEPTION WHEN unique_violation THEN
-            RAISE EXCEPTION 'renglón %: ya existe un registro con esa llave', v_n
+            RAISE EXCEPTION 'renglón %: ya existe una acreditación con esa llave', v_n
                 USING ERRCODE = '23505', TABLE = 'acreditacion', CONSTRAINT = 'acreditacion_pkey';
         END;
         RETURN NEXT v_fila;
@@ -950,7 +950,7 @@ BEGIN
             VALUES (r.codigo, r.cant_creditos, r.hora_acom, r.hora_ind, r.metodologia, r.fecha_inicio, r.fecha_fin, r.duracion_anios, r.duracion_semestres, r.tipo_titulacion, p_maestro, TRUE)
             RETURNING * INTO v_fila;
         EXCEPTION WHEN unique_violation THEN
-            RAISE EXCEPTION 'renglón %: ya existe un registro con esa llave', v_n
+            RAISE EXCEPTION 'renglón %: ya existe un registro calificado con esa llave', v_n
                 USING ERRCODE = '23505', TABLE = 'registro_calificado', CONSTRAINT = 'registro_calificado_pkey';
         END;
         RETURN NEXT v_fila;
@@ -980,7 +980,7 @@ BEGIN
             VALUES (r.id, r.nombre, r.num_creditos, r.tipo, r.area_formacion, r.h_acom, r.h_indep, r.idioma, r.espejo, r.entidad_espejo, r.pais_espejo, p_maestro, TRUE)
             RETURNING * INTO v_fila;
         EXCEPTION WHEN unique_violation THEN
-            RAISE EXCEPTION 'renglón %: ya existe un registro con esa llave', v_n
+            RAISE EXCEPTION 'renglón %: ya existe una actividad académica con esa llave', v_n
                 USING ERRCODE = '23505', TABLE = 'activ_academica', CONSTRAINT = 'activ_academica_pkey';
         END;
         RETURN NEXT v_fila;
@@ -1010,7 +1010,7 @@ BEGIN
             VALUES (r.id, r.nombre, r.pais, r.empresa, r.descripcion, p_maestro, TRUE)
             RETURNING * INTO v_fila;
         EXCEPTION WHEN unique_violation THEN
-            RAISE EXCEPTION 'renglón %: ya existe un registro con esa llave', v_n
+            RAISE EXCEPTION 'renglón %: ya existe una pasantía con esa llave', v_n
                 USING ERRCODE = '23505', TABLE = 'pasantia', CONSTRAINT = 'pasantia_pkey';
         END;
         RETURN NEXT v_fila;
@@ -1040,7 +1040,7 @@ BEGIN
             VALUES (r.id, r.nombre, r.descripcion, r.fecha, r.entidad_otorgante, r.pais, p_maestro, TRUE)
             RETURNING * INTO v_fila;
         EXCEPTION WHEN unique_violation THEN
-            RAISE EXCEPTION 'renglón %: ya existe un registro con esa llave', v_n
+            RAISE EXCEPTION 'renglón %: ya existe un premio con esa llave', v_n
                 USING ERRCODE = '23505', TABLE = 'premio', CONSTRAINT = 'premio_pkey';
         END;
         RETURN NEXT v_fila;

@@ -13,6 +13,7 @@ public interface IUniversidadRepositorio
     Task CrearAsync(Universidad universidad);
     Task<bool> ActualizarAsync(Universidad universidad);
     Task<bool> EliminarLogicoAsync(int id);
+    Task<bool> TieneDetalleActivoAsync(int id);
 }
 
 public class UniversidadRepositorio : IUniversidadRepositorio
@@ -75,5 +76,14 @@ public class UniversidadRepositorio : IUniversidadRepositorio
         using var conexion = Conexion;
         return await conexion.ExecuteScalarAsync<bool>(
             "SELECT * FROM sp_eliminar_universidad(@Id)", new { Id = id });
+    }
+
+    // Pregunta a sp_contar_detalle_universidad: la regla de retiro (B1) vive en el
+    // servicio y aquí solo está la consulta (D-v2-4).
+    public async Task<bool> TieneDetalleActivoAsync(int id)
+    {
+        using var conexion = Conexion;
+        return await conexion.ExecuteScalarAsync<int>(
+            "SELECT * FROM sp_contar_detalle_universidad(@Id)", new { Id = id }) > 0;
     }
 }

@@ -1,4 +1,5 @@
 using System.Data;
+using System.Text.Json;
 using Dapper;
 using Npgsql;
 using ApiInnovacionCurricular.Modelos;
@@ -13,6 +14,7 @@ public interface IAcreditacionRepositorio
     Task<Acreditacion> CrearAsync(Acreditacion entidad);
     Task<Acreditacion?> ActualizarAsync(Acreditacion entidad);
     Task<bool> EliminarLogicoAsync(int resolucion);
+    Task<IEnumerable<Acreditacion>> CrearLoteAsync(int maestro, IEnumerable<Acreditacion> renglones);
 }
 
 // Solo llama a las funciones sp_ de db/04_sp_v2.sql: la API no escribe SQL de
@@ -68,5 +70,24 @@ public class AcreditacionRepositorio : IAcreditacionRepositorio
         using var conexion = Conexion;
         return await conexion.ExecuteScalarAsync<bool>(
             "SELECT * FROM sp_eliminar_acreditacion(@Resolucion)", new { Resolucion = resolucion });
+    }
+
+    // Varios renglones en UNA llamada = UNA transacción (D-v2-5): la función
+    // guarda todos o ninguno. El JSON usa los nombres de las COLUMNAS (snake_case)
+    // porque así los lee jsonb_to_recordset dentro de la función; se arma a mano
+    // y no con una política de nombres para que no dependa de cómo se parta «HAcom».
+    public async Task<IEnumerable<Acreditacion>> CrearLoteAsync(int maestro, IEnumerable<Acreditacion> renglones)
+    {
+        var json = JsonSerializer.Serialize(renglones.Select(r => new Dictionary<string, object?>
+        {
+            ["resolucion"] = r.Resolucion,
+            ["tipo"] = r.Tipo,
+            ["calificacion"] = r.Calificacion,
+            ["fecha_inicio"] = r.FechaInicio,
+            ["fecha_fin"] = r.FechaFin
+        }));
+        using var conexion = Conexion;
+        return await conexion.QueryAsync<Acreditacion>(
+            "SELECT * FROM sp_crear_acreditacion_lote(@Maestro, @Renglones::jsonb)", new { Maestro = maestro, Renglones = json });
     }
 }

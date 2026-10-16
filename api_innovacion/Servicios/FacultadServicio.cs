@@ -66,6 +66,11 @@ public class FacultadServicio : IFacultadServicio
 
     public async Task EliminarAsync(int id)
     {
+        // Regla B1: un maestro con detalle activo no se retira (la pregunta la responde
+        // sp_contar_detalle_facultad). Si el id no existe, el conteo es 0 y sigue el 404.
+        if (await _repositorio.TieneDetalleActivoAsync(id))
+            throw new ConflictoExcepcion($"no se puede retirar la facultad {id}: tiene registros activos");
+
         if (!await _repositorio.EliminarLogicoAsync(id))
             throw new NoEncontradoExcepcion($"no existe una facultad con id {id}");
     }

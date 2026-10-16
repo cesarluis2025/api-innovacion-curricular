@@ -1,4 +1,5 @@
 using System.Data;
+using System.Text.Json;
 using Dapper;
 using Npgsql;
 using ApiInnovacionCurricular.Modelos;
@@ -13,6 +14,7 @@ public interface IPremioRepositorio
     Task<Premio> CrearAsync(Premio entidad);
     Task<Premio?> ActualizarAsync(Premio entidad);
     Task<bool> EliminarLogicoAsync(int id);
+    Task<IEnumerable<Premio>> CrearLoteAsync(int maestro, IEnumerable<Premio> renglones);
 }
 
 // Solo llama a las funciones sp_ de db/04_sp_v2.sql: la API no escribe SQL de
@@ -68,5 +70,25 @@ public class PremioRepositorio : IPremioRepositorio
         using var conexion = Conexion;
         return await conexion.ExecuteScalarAsync<bool>(
             "SELECT * FROM sp_eliminar_premio(@Id)", new { Id = id });
+    }
+
+    // Varios renglones en UNA llamada = UNA transacción (D-v2-5): la función
+    // guarda todos o ninguno. El JSON usa los nombres de las COLUMNAS (snake_case)
+    // porque así los lee jsonb_to_recordset dentro de la función; se arma a mano
+    // y no con una política de nombres para que no dependa de cómo se parta «HAcom».
+    public async Task<IEnumerable<Premio>> CrearLoteAsync(int maestro, IEnumerable<Premio> renglones)
+    {
+        var json = JsonSerializer.Serialize(renglones.Select(r => new Dictionary<string, object?>
+        {
+            ["id"] = r.Id,
+            ["nombre"] = r.Nombre,
+            ["descripcion"] = r.Descripcion,
+            ["fecha"] = r.Fecha.ToString("yyyy-MM-dd"),
+            ["entidad_otorgante"] = r.EntidadOtorgante,
+            ["pais"] = r.Pais
+        }));
+        using var conexion = Conexion;
+        return await conexion.QueryAsync<Premio>(
+            "SELECT * FROM sp_crear_premio_lote(@Maestro, @Renglones::jsonb)", new { Maestro = maestro, Renglones = json });
     }
 }

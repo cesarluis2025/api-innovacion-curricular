@@ -85,6 +85,6 @@ public class ActivAcademicaServicio : IActivAcademicaServicio
     }
 
     // D-v2-14: si la actividad no es espejo, la base pide un texto igualmente; se guarda «No aplica».
-    private static string TextoEspejo(int espejo, string? texto)
+    internal static string TextoEspejo(int espejo, string? texto)
         => espejo == 0 ? "No aplica" : texto!.Trim();
 }

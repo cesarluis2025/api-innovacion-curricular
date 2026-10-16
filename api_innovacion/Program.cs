@@ -73,6 +73,11 @@ builder.Services.AddScoped<IDocenteDepartamentoServicio, DocenteDepartamentoServ
 builder.Services.AddScoped<IAlianzaRepositorio, AlianzaRepositorio>();
 builder.Services.AddScoped<IAlianzaServicio, AlianzaServicio>();
 
+// v2, fase 10: maestro-detalle (lecturas del detalle y lotes).
+builder.Services.AddScoped<IUniversidadDetalleServicio, UniversidadDetalleServicio>();
+builder.Services.AddScoped<IFacultadDetalleServicio, FacultadDetalleServicio>();
+builder.Services.AddScoped<IProgramaDetalleServicio, ProgramaDetalleServicio>();
+
 var app = builder.Build();
 
 // Primer middleware: si algo falla más abajo, aquí se convierte en 404/409/500.

@@ -1,4 +1,5 @@
 using System.Data;
+using System.Text.Json;
 using Dapper;
 using Npgsql;
 using ApiInnovacionCurricular.Modelos;
@@ -13,6 +14,7 @@ public interface IActivAcademicaRepositorio
     Task<ActivAcademica> CrearAsync(ActivAcademica entidad);
     Task<ActivAcademica?> ActualizarAsync(ActivAcademica entidad);
     Task<bool> EliminarLogicoAsync(int id);
+    Task<IEnumerable<ActivAcademica>> CrearLoteAsync(int maestro, IEnumerable<ActivAcademica> renglones);
 }
 
 // Solo llama a las funciones sp_ de db/04_sp_v2.sql: la API no escribe SQL de
@@ -68,5 +70,30 @@ public class ActivAcademicaRepositorio : IActivAcademicaRepositorio
         using var conexion = Conexion;
         return await conexion.ExecuteScalarAsync<bool>(
             "SELECT * FROM sp_eliminar_activ_academica(@Id)", new { Id = id });
+    }
+
+    // Varios renglones en UNA llamada = UNA transacción (D-v2-5): la función
+    // guarda todos o ninguno. El JSON usa los nombres de las COLUMNAS (snake_case)
+    // porque así los lee jsonb_to_recordset dentro de la función; se arma a mano
+    // y no con una política de nombres para que no dependa de cómo se parta «HAcom».
+    public async Task<IEnumerable<ActivAcademica>> CrearLoteAsync(int maestro, IEnumerable<ActivAcademica> renglones)
+    {
+        var json = JsonSerializer.Serialize(renglones.Select(r => new Dictionary<string, object?>
+        {
+            ["id"] = r.Id,
+            ["nombre"] = r.Nombre,
+            ["num_creditos"] = r.NumCreditos,
+            ["tipo"] = r.Tipo,
+            ["area_formacion"] = r.AreaFormacion,
+            ["h_acom"] = r.HAcom,
+            ["h_indep"] = r.HIndep,
+            ["idioma"] = r.Idioma,
+            ["espejo"] = r.Espejo,
+            ["entidad_espejo"] = r.EntidadEspejo,
+            ["pais_espejo"] = r.PaisEspejo
+        }));
+        using var conexion = Conexion;
+        return await conexion.QueryAsync<ActivAcademica>(
+            "SELECT * FROM sp_crear_activ_academica_lote(@Maestro, @Renglones::jsonb)", new { Maestro = maestro, Renglones = json });
     }
 }

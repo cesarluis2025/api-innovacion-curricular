@@ -1,4 +1,5 @@
 using System.Data;
+using System.Text.Json;
 using Dapper;
 using Npgsql;
 using ApiInnovacionCurricular.Modelos;
@@ -13,6 +14,8 @@ public interface IFacultadRepositorio
     Task<Facultad> CrearAsync(Facultad entidad);
     Task<Facultad?> ActualizarAsync(Facultad entidad);
     Task<bool> EliminarLogicoAsync(int id);
+    Task<IEnumerable<Facultad>> CrearLoteAsync(int maestro, IEnumerable<Facultad> renglones);
+    Task<bool> TieneDetalleActivoAsync(int id);
 }
 
 // Solo llama a las funciones sp_ de db/04_sp_v2.sql: la API no escribe SQL de
@@ -68,5 +71,32 @@ public class FacultadRepositorio : IFacultadRepositorio
         using var conexion = Conexion;
         return await conexion.ExecuteScalarAsync<bool>(
             "SELECT * FROM sp_eliminar_facultad(@Id)", new { Id = id });
+    }
+
+    // Varios renglones en UNA llamada = UNA transacción (D-v2-5): la función
+    // guarda todos o ninguno. El JSON usa los nombres de las COLUMNAS (snake_case)
+    // porque así los lee jsonb_to_recordset dentro de la función; se arma a mano
+    // y no con una política de nombres para que no dependa de cómo se parta «HAcom».
+    public async Task<IEnumerable<Facultad>> CrearLoteAsync(int maestro, IEnumerable<Facultad> renglones)
+    {
+        var json = JsonSerializer.Serialize(renglones.Select(r => new Dictionary<string, object?>
+        {
+            ["id"] = r.Id,
+            ["nombre"] = r.Nombre,
+            ["tipo"] = r.Tipo,
+            ["fecha_fun"] = r.FechaFun.ToString("yyyy-MM-dd")
+        }));
+        using var conexion = Conexion;
+        return await conexion.QueryAsync<Facultad>(
+            "SELECT * FROM sp_crear_facultad_lote(@Maestro, @Renglones::jsonb)", new { Maestro = maestro, Renglones = json });
+    }
+
+    // Pregunta a sp_contar_detalle_facultad: la regla de retiro (B1) vive en el servicio y
+    // aquí solo está la consulta (D-v2-4).
+    public async Task<bool> TieneDetalleActivoAsync(int id)
+    {
+        using var conexion = Conexion;
+        return await conexion.ExecuteScalarAsync<int>(
+            "SELECT * FROM sp_contar_detalle_facultad(@Id)", new { Id = id }) > 0;
     }
 }

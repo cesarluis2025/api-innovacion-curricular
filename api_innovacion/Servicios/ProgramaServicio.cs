@@ -78,6 +78,11 @@ public class ProgramaServicio : IProgramaServicio
 
     public async Task EliminarAsync(int id)
     {
+        // Regla B1: un maestro con detalle activo no se retira (la pregunta la responde
+        // sp_contar_detalle_programa). Si el id no existe, el conteo es 0 y sigue el 404.
+        if (await _repositorio.TieneDetalleActivoAsync(id))
+            throw new ConflictoExcepcion($"no se puede retirar el programa {id}: tiene registros activos");
+
         if (!await _repositorio.EliminarLogicoAsync(id))
             throw new NoEncontradoExcepcion($"no existe un programa con id {id}");
     }

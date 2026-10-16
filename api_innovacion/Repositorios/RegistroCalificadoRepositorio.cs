@@ -1,4 +1,5 @@
 using System.Data;
+using System.Text.Json;
 using Dapper;
 using Npgsql;
 using ApiInnovacionCurricular.Modelos;
@@ -13,6 +14,7 @@ public interface IRegistroCalificadoRepositorio
     Task<RegistroCalificado> CrearAsync(RegistroCalificado entidad);
     Task<RegistroCalificado?> ActualizarAsync(RegistroCalificado entidad);
     Task<bool> EliminarLogicoAsync(int codigo);
+    Task<IEnumerable<RegistroCalificado>> CrearLoteAsync(int maestro, IEnumerable<RegistroCalificado> renglones);
 }
 
 // Solo llama a las funciones sp_ de db/04_sp_v2.sql: la API no escribe SQL de
@@ -68,5 +70,29 @@ public class RegistroCalificadoRepositorio : IRegistroCalificadoRepositorio
         using var conexion = Conexion;
         return await conexion.ExecuteScalarAsync<bool>(
             "SELECT * FROM sp_eliminar_registro_calificado(@Codigo)", new { Codigo = codigo });
+    }
+
+    // Varios renglones en UNA llamada = UNA transacción (D-v2-5): la función
+    // guarda todos o ninguno. El JSON usa los nombres de las COLUMNAS (snake_case)
+    // porque así los lee jsonb_to_recordset dentro de la función; se arma a mano
+    // y no con una política de nombres para que no dependa de cómo se parta «HAcom».
+    public async Task<IEnumerable<RegistroCalificado>> CrearLoteAsync(int maestro, IEnumerable<RegistroCalificado> renglones)
+    {
+        var json = JsonSerializer.Serialize(renglones.Select(r => new Dictionary<string, object?>
+        {
+            ["codigo"] = r.Codigo,
+            ["cant_creditos"] = r.CantCreditos,
+            ["hora_acom"] = r.HoraAcom,
+            ["hora_ind"] = r.HoraInd,
+            ["metodologia"] = r.Metodologia,
+            ["fecha_inicio"] = r.FechaInicio.ToString("yyyy-MM-dd"),
+            ["fecha_fin"] = r.FechaFin.ToString("yyyy-MM-dd"),
+            ["duracion_anios"] = r.DuracionAnios,
+            ["duracion_semestres"] = r.DuracionSemestres,
+            ["tipo_titulacion"] = r.TipoTitulacion
+        }));
+        using var conexion = Conexion;
+        return await conexion.QueryAsync<RegistroCalificado>(
+            "SELECT * FROM sp_crear_registro_calificado_lote(@Maestro, @Renglones::jsonb)", new { Maestro = maestro, Renglones = json });
     }
 }

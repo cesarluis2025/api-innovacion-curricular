@@ -34,14 +34,14 @@ public class UniversidadServicio : IUniversidadServicio
         if (await _repositorio.ExisteIdAsync(peticion.Id))
             throw new ConflictoExcepcion($"ya existe una universidad con id {peticion.Id}");
 
-        var universidad = new Universidad { Id = peticion.Id, Nombre = peticion.Nombre, Tipo = peticion.Tipo, Ciudad = peticion.Ciudad, Activo = true };
+        var universidad = new Universidad { Id = peticion.Id, Nombre = peticion.Nombre, Tipo = peticion.Tipo, Ciudad = peticion.Ciudad };
         await _repositorio.CrearAsync(universidad);
         return universidad;
     }
 
     public async Task<Universidad> ActualizarAsync(int id, ActualizarUniversidadPeticion peticion)
     {
-        var universidad = new Universidad { Id = id, Nombre = peticion.Nombre, Tipo = peticion.Tipo, Ciudad = peticion.Ciudad, Activo = true };
+        var universidad = new Universidad { Id = id, Nombre = peticion.Nombre, Tipo = peticion.Tipo, Ciudad = peticion.Ciudad };
         if (!await _repositorio.ActualizarAsync(universidad))
             throw new NoEncontradoExcepcion($"no existe una universidad con id {id}");
         return universidad;
@@ -49,6 +49,11 @@ public class UniversidadServicio : IUniversidadServicio
 
     public async Task EliminarAsync(int id)
     {
+        // Regla B1: una universidad con facultades activas no se retira (409). Si el id
+        // no existe, el conteo es 0 y sigue el 404.
+        if (await _repositorio.TieneDetalleActivoAsync(id))
+            throw new ConflictoExcepcion($"no se puede retirar la universidad {id}: tiene registros activos");
+
         if (!await _repositorio.EliminarLogicoAsync(id))
             throw new NoEncontradoExcepcion($"no existe una universidad con id {id}");
     }
